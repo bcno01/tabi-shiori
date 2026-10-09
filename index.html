@@ -1,0 +1,1978 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>たびのしおり</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="theme-color" content="#2c4a7c" />
+<meta name="color-scheme" content="light dark" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="たびのしおり" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<style>
+  :root {
+    --bg: #f6f3ec;
+    --card: #ffffff;
+    --text: #23262b;
+    --dim: #777a80;
+    --line: #e4e0d5;
+    --accent: #2c4a7c;
+    --accent-ink: #ffffff;
+    --accent-soft: #e6ecf6;
+    --danger: #c0392b;
+    --today: #e07a4f;
+    --warn: #b9770e;
+    --c-move: #3a86c8;
+    --c-eat: #e0782b;
+    --c-sight: #2f9e6b;
+    --c-stay: #8a63c9;
+    --c-shop: #d1477e;
+    --c-other: #8a8a82;
+    --topH: 112px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c;
+      --card: #1e2229;
+      --text: #ebe9e3;
+      --dim: #9a9ca3;
+      --line: #2e333c;
+      --accent: #8fb0e8;
+      --accent-ink: #0c1a30;
+      --accent-soft: #212c40;
+      --danger: #ef6b5c;
+      --today: #f09063;
+      --warn: #e0a23a;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
+  }
+  body.lock { overflow: hidden; }
+  body.dnd { user-select: none; -webkit-user-select: none; cursor: grabbing; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  a { color: var(--accent); }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+
+  /* ---- 上部バー ---- */
+  .top {
+    position: sticky; top: 0; z-index: 9;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding-top: env(safe-area-inset-top);
+  }
+  .top .bar1 { display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 0 auto; padding: 8px 8px 4px; }
+  .top .ttl-wrap { flex: 1; min-width: 0; text-align: center; padding: 2px 4px; cursor: pointer; }
+  .trip-title { font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trip-title { display: flex; align-items: baseline; justify-content: center; gap: 5px; }
+  .trip-title .tt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .trip-title .caret { flex: none; font-size: 12px; color: var(--accent); }
+  .archtoggle { display: flex; justify-content: space-between; align-items: center; width: 100%; border: 0; border-top: 1px solid var(--line); background: none; padding: 14px 4px; font-weight: 700; color: var(--dim); margin-bottom: 8px; }
+  .menu.switch button { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .menu.switch button.cur { background: var(--accent-soft); border-radius: 10px; }
+  .sw-main { min-width: 0; flex: 1; }
+  .sw-name { display: block; font-weight: 700; overflow-wrap: anywhere; }
+  .menu.switch small { display: block; color: var(--dim); font-size: 12px; margin-top: 1px; }
+  .trip-dest { font-size: 12px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 18px; }
+  .trip-dest.err { color: var(--danger); }
+  .ghostbtn { background: none; border: 0; color: var(--accent); padding: 8px 10px; border-radius: 8px; min-height: 40px; font-weight: 600; }
+  .ghostbtn:active { background: var(--accent-soft); }
+  .ghostbtn.icon { padding: 8px 8px; min-width: 36px; font-size: 20px; line-height: 1; }
+  .tabs { display: flex; max-width: 640px; margin: 0 auto; padding: 0 16px 8px; gap: 6px; }
+  .tabs button {
+    flex: 1; border: 0; background: transparent; padding: 8px 4px; border-radius: 10px;
+    color: var(--dim); font-weight: 600; font-size: 14px;
+  }
+  .tabs button.on { background: var(--accent); color: var(--accent-ink); }
+  .tabs small { font-weight: 400; opacity: .85; margin-left: 2px; }
+
+  /* ---- 一覧 ---- */
+  .home-head { display: flex; align-items: flex-end; justify-content: space-between; padding: calc(24px + env(safe-area-inset-top)) 0 12px; }
+  .home-head h1 { margin: 0; font-size: 26px; letter-spacing: .02em; }
+  .home-head p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+  .home-head .acts { display: flex; }
+  .trip-card {
+    display: block; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+  }
+  .trip-card:active { background: var(--accent-soft); }
+  .trip-card .row1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .trip-card .name { font-weight: 700; font-size: 17px; overflow-wrap: anywhere; }
+  .trip-card .meta { color: var(--dim); font-size: 13px; margin-top: 4px; }
+  .badges { display: flex; gap: 4px; flex: none; }
+  .badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; background: var(--accent-soft); color: var(--accent); }
+  .badge.now { background: var(--today); color: #fff; }
+  .badge.past { background: var(--line); color: var(--dim); }
+  .empty { text-align: center; color: var(--dim); padding: 36px 8px; }
+  .empty h2 { color: var(--text); font-size: 18px; margin: 0 0 6px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: 1px solid var(--line); background: var(--card); color: var(--text);
+    padding: 10px 16px; border-radius: 12px; font-weight: 600; min-height: 44px;
+  }
+  .btn:active { filter: brightness(.95); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.danger { color: var(--danger); }
+  .btn.block { display: flex; width: 100%; }
+  .btn.small { min-height: 36px; padding: 6px 12px; font-size: 14px; border-radius: 10px; }
+  .btn[disabled] { opacity: .5; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-row > .btn { flex: 1; }
+
+  /* ---- 日程画面のレイアウト(広い画面: 左=やりたいこと/行きたい場所, 右=日程) ---- */
+  .wrap.wide { max-width: 640px; }
+  .plan-grid { display: block; }
+  .summary { padding: 14px 0 6px; color: var(--dim); font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .summary b { color: var(--text); }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 10px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; border: 1px solid var(--line); background: var(--card); border-radius: 99px;
+    padding: 6px 12px; font-size: 13px; font-weight: 600; white-space: nowrap;
+  }
+  .chip.today { border-color: var(--today); color: var(--today); }
+
+  /* 左ペイン(スマホでは下から出るドロワー) */
+  .pool {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 8;
+    background: var(--card); border-top: 1px solid var(--line); border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,.12); padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pool-bar { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 0; background: none; padding: 12px 18px; font-weight: 700; }
+  .pool-bar small { color: var(--dim); font-weight: 400; }
+  .pool-body { display: none; }
+  .pool.open .pool-body { display: block; max-width: 640px; margin: 0 auto; }
+  .pool-seg { display: flex; gap: 6px; padding: 0 14px 8px; }
+  .pool-seg button { flex: 1; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 6px; font-weight: 600; font-size: 14px; color: var(--dim); }
+  .pool-seg button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .pool-scroll { height: 40vh; overflow-y: auto; overscroll-behavior: contain; padding: 0 14px 14px; }
+  .pool[data-tab="want"] .pool-sec[data-kind="place"], .pool[data-tab="place"] .pool-sec[data-kind="want"] { display: none; }
+  body.has-pool { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  body.has-pool.pool-open { padding-bottom: calc(40vh + 130px); }
+  .pool-sec { margin-bottom: 14px; border-radius: 12px; }
+  .pool-sec h3 { margin: 0 0 6px; font-size: 14px; display: flex; align-items: baseline; gap: 6px; }
+  .pool-sec h3 small { color: var(--dim); font-weight: 400; }
+  .pool-sec .hintline { font-size: 12px; color: var(--dim); margin: 0 0 6px; }
+  .hintline { font-size: 12px; color: var(--dim); margin: 0 0 10px; }
+  .pool-add { display: flex; gap: 6px; margin-bottom: 8px; }
+  .pool-add input { flex: 1; min-width: 0; min-height: 40px; padding: 8px 12px; }
+  .pool-add .btn { min-height: 40px; padding: 6px 14px; }
+  .pool-list { min-height: 46px; border-radius: 12px; }
+  .pool-list:empty::before { content: 'ここにドラッグで戻せます'; display: block; text-align: center; color: var(--dim); font-size: 13px; padding: 12px; border: 1px dashed var(--line); border-radius: 12px; }
+  .pcard { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px 8px 12px; margin-bottom: 6px; cursor: pointer; touch-action: pan-y; }
+  .pcard:active { background: var(--accent-soft); }
+  .pcard .ptxt { flex: 1; min-width: 0; }
+  .pcard .ttl { font-weight: 600; overflow-wrap: anywhere; line-height: 1.35; }
+  .pcard .sub { font-size: 12px; color: var(--dim); overflow-wrap: anywhere; }
+  .pcard .padd { flex: none; border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 4px 8px; font-size: 12px; font-weight: 600; color: var(--accent); min-height: 30px; }
+  .handle {
+    flex: none; width: 36px; height: 40px; display: flex; align-items: center; justify-content: center;
+    color: var(--dim); font-size: 16px; letter-spacing: -2px; touch-action: none; cursor: grab;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  .pool-sec.dz-over, .day.dz-over .items { outline: 2px dashed var(--accent); outline-offset: 2px; }
+
+  @media (min-width: 900px) {
+    .wrap.wide { max-width: 1120px; }
+    .top[data-wide] .bar1, .top[data-wide] .tabs { max-width: 1120px; }
+    .plan-grid { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 28px; align-items: start; }
+    .pool {
+      position: sticky; top: calc(var(--topH) + 12px); z-index: 1; margin-top: 16px;
+      border: 1px solid var(--line); border-radius: 16px; box-shadow: none; padding: 14px 0 0;
+    }
+    .pool-bar, .pool-seg { display: none; }
+    .pool-body, .pool.open .pool-body { display: block; max-width: none; }
+    .pool-scroll { height: auto; max-height: calc(100vh - var(--topH) - 70px); }
+    .pool[data-tab] .pool-sec { display: block !important; }
+    body.has-pool, body.has-pool.pool-open { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+  }
+
+  /* ---- 日程 ---- */
+  .day { margin-top: 18px; scroll-margin-top: calc(var(--topH) + 8px); }
+  .dayhead { display: flex; align-items: center; gap: 8px; padding: 6px 2px; }
+  .dayhead .dn { font-weight: 800; font-size: 18px; }
+  .dayhead .dd { color: var(--dim); font-size: 14px; }
+  .dayhead .sp { flex: 1; }
+  .day > .dt { font-size: 14px; padding: 0 2px 6px; overflow-wrap: anywhere; }
+  .dayhead .dc { color: var(--dim); font-size: 13px; white-space: nowrap; }
+  .today-tag { background: var(--today); color: #fff; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; }
+  .dayhead .more { padding: 4px 10px; min-height: 34px; font-size: 18px; line-height: 1; }
+  .items { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; min-height: 50px; }
+  .item { display: flex; gap: 10px; padding: 12px 4px 12px 10px; border-top: 1px solid var(--line); cursor: pointer; align-items: stretch; background: var(--card); }
+  .item:first-child { border-top: 0; }
+  .item:active { background: var(--accent-soft); }
+  .item .tm { width: 44px; flex: none; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; line-height: 1.35; padding-top: 1px; }
+  .item .tm small { display: block; font-weight: 400; color: var(--dim); font-size: 12px; }
+  .item .tm.none { color: var(--dim); font-weight: 400; }
+  .item .bar { width: 4px; border-radius: 4px; flex: none; }
+  .item .main { flex: 1; min-width: 0; }
+  .item .ttl { font-weight: 700; overflow-wrap: anywhere; }
+  .item .sub { font-size: 13px; color: var(--dim); overflow-wrap: anywhere; }
+  .item .sub a { color: var(--accent); }
+  .item .memo { font-size: 13px; color: var(--dim); white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 2px; }
+  .item .side { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; flex: none; }
+  .item .cost { font-size: 13px; color: var(--dim); font-variant-numeric: tabular-nums; padding-right: 8px; }
+  .day-empty { padding: 14px; text-align: center; color: var(--dim); font-size: 14px; }
+  .items.has-ph .day-empty { display: none; }
+  .issue { font-size: 12px; margin-top: 3px; color: var(--warn); overflow-wrap: anywhere; }
+  .issue.bad { color: var(--danger); }
+  .issue b { font-weight: 700; margin-right: 4px; }
+  .dissue { font-size: 12px; font-weight: 700; color: var(--warn); white-space: nowrap; }
+  .dissue.bad { color: var(--danger); }
+  .item.now { background: color-mix(in srgb, var(--today) 12%, var(--card)); box-shadow: inset 3px 0 0 var(--today); }
+  .item.past { opacity: .5; }
+  .nowcard { margin-top: 14px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--today) 55%, var(--line)); background: color-mix(in srgb, var(--today) 9%, var(--card)); border-radius: 14px; }
+  .nowcard .nh { font-size: 12px; font-weight: 700; color: var(--today); margin-bottom: 6px; letter-spacing: .04em; }
+  .nowcard .nr { display: flex; gap: 10px; align-items: baseline; padding: 4px 0; }
+  .nowcard .nk { flex: none; width: 34px; font-size: 12px; font-weight: 700; color: var(--dim); }
+  .nowcard .nt { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .nowcard .nt b { font-variant-numeric: tabular-nums; margin-right: 6px; }
+  .nowcard .nt small { display: block; color: var(--dim); font-size: 12px; }
+  .nowcard .ncount { color: var(--today); font-weight: 700; white-space: nowrap; }
+  .nowcard a { color: var(--accent); }
+  .leg { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .leg:first-child { border-top: 0; }
+  .leg .lt { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+  .leg .lt small { color: var(--dim); display: block; font-size: 12px; }
+  .leg a.btn { text-decoration: none; }
+  .add-item { width: 100%; margin-top: 8px; border-style: dashed; color: var(--accent); }
+  .ph { height: 6px; background: var(--accent); border-radius: 6px; margin: 2px 8px; opacity: .85; }
+  .pool-list .ph { margin: 2px 0 6px; }
+  .dragging { opacity: .3; }
+  .ghost { box-shadow: 0 10px 30px rgba(0,0,0,.28); border-radius: 12px; opacity: .96; background: var(--card); }
+
+  /* ---- 持ち物 ---- */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+  .pack-form { display: flex; gap: 8px; padding: 14px 0 10px; }
+  .pack-form input { flex: 1; min-width: 0; }
+  .progress { height: 6px; border-radius: 6px; background: var(--line); overflow: hidden; margin: 4px 0 12px; }
+  .progress > i { display: block; height: 100%; background: var(--c-sight); transition: width .2s; }
+  .pack-row { display: flex; align-items: center; gap: 12px; padding: 4px 6px 4px 14px; border-top: 1px solid var(--line); min-height: 48px; }
+  .pack-row:first-child { border-top: 0; }
+  .pack-row input[type=checkbox] { width: 22px; height: 22px; flex: none; accent-color: var(--accent); }
+  .pack-row label { flex: 1; min-width: 0; padding: 8px 0; overflow-wrap: anywhere; }
+  .pack-row.done label { color: var(--dim); text-decoration: line-through; }
+  .pack-row .x { border: 0; background: none; color: var(--dim); width: 40px; height: 40px; font-size: 20px; }
+
+  /* ---- メモ ---- */
+  .note { padding: 12px 14px; margin-top: 10px; cursor: pointer; }
+  .note:active { background: var(--accent-soft); }
+  .note .nl { font-weight: 700; font-size: 14px; color: var(--accent); }
+  .note .nt { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+  /* ---- フォーム ---- */
+  input[type=text], input[type=url], input[type=email], input[type=password], input[type=date], input[type=time], input[type=number], input[type=search], select, textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 44px;
+    font-size: 16px; appearance: none; -webkit-appearance: none;
+  }
+  input[type=date], input[type=time] { min-width: 0; }
+  textarea { min-height: 84px; resize: vertical; }
+  select { background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 32px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .field { margin-bottom: 14px; }
+  .field > label, .field > .lbl { display: block; font-size: 13px; font-weight: 600; color: var(--dim); margin-bottom: 4px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .catpick { display: flex; flex-wrap: wrap; gap: 6px; }
+  .catpick button { border: 1px solid var(--line); background: var(--bg); border-radius: 99px; padding: 6px 12px; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+  .catpick button i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .catpick button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .hint { font-size: 12px; color: var(--dim); margin-top: 4px; }
+  .link-btn { background: none; border: 0; color: var(--accent); padding: 4px 0; font-size: 13px; text-decoration: underline; }
+  .msg { font-size: 13px; padding: 8px 12px; border-radius: 10px; background: var(--accent-soft); margin-bottom: 12px; }
+  .msg.err { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+  .linkbox { display: flex; gap: 6px; margin-bottom: 8px; }
+  .linkbox input { font-size: 13px; }
+  .optrow { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
+  .optrow input { width: 22px; height: 22px; flex: none; margin-top: 1px; accent-color: var(--accent); }
+  .optrow small { display: block; color: var(--dim); font-size: 12px; }
+  .item.ro { cursor: default; }
+  .item.ro:active { background: var(--card); }
+  .note.ro { cursor: default; }
+  .note.ro:active { background: var(--card); }
+
+  /* ---- シート ---- */
+  .backdrop { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; animation: fade .15s; }
+  .sheet {
+    background: var(--card); width: 100%; max-width: 640px; max-height: 92vh; max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain;
+    border-radius: 18px 18px 0 0; padding: 0 16px calc(20px + env(safe-area-inset-bottom)); animation: up .2s;
+  }
+  .sheet-head { position: sticky; top: 0; background: var(--card); display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px; z-index: 1; }
+  .sheet-head h2 { margin: 0; font-size: 17px; }
+  .sheet-head button { border: 0; background: var(--bg); width: 32px; height: 32px; border-radius: 50%; font-size: 18px; line-height: 1; color: var(--dim); }
+  .menu button { display: block; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--line); background: none; padding: 14px 4px; font-size: 16px; }
+  .menu button:first-child { border-top: 0; }
+  .menu button.danger { color: var(--danger); }
+  .menu button small { display: block; color: var(--dim); font-size: 12px; }
+  @media (min-width: 900px) {
+    .backdrop { align-items: center; }
+    .sheet { border-radius: 18px; max-height: 88vh; }
+  }
+  @keyframes fade { from { opacity: 0 } }
+  @keyframes up { from { transform: translateY(40px); opacity: .6 } }
+
+  #toast {
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px);
+    background: #23262b; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 40;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  #toast .toast-act { background: none; border: 0; color: #9fc0ff; font-weight: 700; padding: 4px 8px; margin-left: 6px; text-decoration: underline; }
+
+  /* ---- 印刷 ---- */
+  #print { display: none; }
+  @media print {
+    :root { --bg: #fff; --text: #000; --dim: #555; --line: #bbb; --card: #fff; }
+    html, body { background: #fff; color: #000; }
+    body { padding: 0 !important; font-size: 12px; line-height: 1.45; }
+    #app, #sheetRoot, #toast { display: none !important; }
+    #print { display: block; }
+    #print h1 { font-size: 22px; margin: 0 0 2px; }
+    #print .pmeta { color: #444; margin-bottom: 10px; }
+    #print h2 { font-size: 15px; margin: 14px 0 4px; padding-bottom: 2px; border-bottom: 2px solid #333; break-after: avoid; }
+    #print table { width: 100%; border-collapse: collapse; }
+    #print tr { break-inside: avoid; }
+    #print td { padding: 4px 6px; border-bottom: 1px solid #ccc; vertical-align: top; }
+    #print td.t { width: 78px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    #print td.c { width: 70px; text-align: right; white-space: nowrap; }
+    #print .sm { color: #555; font-size: 11px; white-space: pre-wrap; }
+    #print ul { list-style: none; padding: 0; margin: 0; columns: 2; }
+    #print li { padding: 2px 0; break-inside: avoid; }
+    #print .pnote { margin: 4px 0; white-space: pre-wrap; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="print" aria-hidden="true"></div>
+<div id="sheetRoot"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden />
+
+<script>
+'use strict';
+
+/* ========== 基本ユーティリティ ========== */
+const $ = (s, r = document) => r.querySelector(s);
+const uid = () => {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+  const x = [...b].map((v) => v.toString(16).padStart(2, '0')).join('');
+  return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`;
+};
+const pad = (n) => String(n).padStart(2, '0');
+const str = (v, max = 2000) => (typeof v === 'string' ? v.slice(0, max) : '');
+const yen = (n) => '¥' + Number(n).toLocaleString('ja-JP');
+const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+
+// DOM 組み立て。ユーザー入力は必ず textContent / 子ノードとして入れる(innerHTML は使わない)。
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  let value;
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k === 'value') value = v;
+      else if (k === 'checked') el.checked = !!v;
+      else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+      else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? '' : v);
+    }
+  }
+  for (const c of kids.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  if (value !== undefined) el.value = value;
+  return el;
+}
+
+let toastTimer = 0;
+let toastHasAct = false;
+// act = { label, fn }: 「元に戻す」などのボタン付きで少し長めに出す
+function toast(msg, act) {
+  const t = $('#toast');
+  t.textContent = msg;
+  toastHasAct = !!act;
+  t.style.pointerEvents = act ? 'auto' : 'none';
+  if (act) t.append(h('button', { class: 'toast-act', onclick: () => { t.classList.remove('show'); toastHasAct = false; act.fn(); } }, act.label));
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); toastHasAct = false; }, act ? 6000 : 2600);
+}
+
+/* ========== 日付 ========== */
+const WD = ['日', '月', '火', '水', '木', '金', '土'];
+const parseD = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const fmtD = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && fmtD(parseD(s)) === s;
+const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return fmtD(d); };
+const mdw = (s) => { const d = parseD(s); return `${d.getMonth() + 1}/${d.getDate()}(${WD[d.getDay()]})`; };
+const ymdw = (s) => { const d = parseD(s); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${WD[d.getDay()]})`; };
+const todayStr = () => fmtD(new Date());
+const diffDays = (a, b) => Math.round((parseD(a) - parseD(b)) / 864e5);
+
+/* ========== データモデル ==========
+   trip = { id, title, dest, start, days:[{id,title,items:[item]}], pools:{want:[item],place:[item]},
+            packing:[{id,text,done}], notes:[{id,label,text}], created, updated }
+   item = { id, time, end, title, cat, place, cost, url, memo, kind }          ← kind: '' | 'want' | 'place'(出どころ) */
+const KEY = 'tabi-shiori-v1';
+const KEY_PREV = KEY + '-prev';
+
+const CATS = [
+  { id: 'move', name: '移動', color: 'var(--c-move)' },
+  { id: 'eat', name: '食事', color: 'var(--c-eat)' },
+  { id: 'sight', name: '観光', color: 'var(--c-sight)' },
+  { id: 'stay', name: '宿泊', color: 'var(--c-stay)' },
+  { id: 'shop', name: '買い物', color: 'var(--c-shop)' },
+  { id: 'other', name: 'その他', color: 'var(--c-other)' },
+];
+const catOf = (id) => CATS.find((c) => c.id === id) || CATS[CATS.length - 1];
+const POOLS = [
+  { id: 'want', name: 'やりたいこと', ph: '例: 温泉に入る' },
+  { id: 'place', name: '行きたい場所', ph: '例: 清水寺' },
+];
+
+const PACK_DEFAULTS = ['パスポート・身分証', '財布・現金', 'スマホ・充電器', 'モバイルバッテリー', '着替え', '下着・靴下', '洗面用具', '常備薬', '折りたたみ傘', 'ハンカチ・ティッシュ', 'イヤホン', 'エコバッグ'];
+const NOTE_LABELS = ['宿', '交通', '予約番号', '緊急連絡先'];
+
+const newDay = () => ({ id: uid(), title: '', items: [] });
+const newItem = (title, kind) => ({ id: uid(), time: '', end: '', title, cat: kind === 'place' ? 'sight' : 'other', place: kind === 'place' ? title : '', cost: null, url: '', memo: '', kind });
+const newTrip = (title, start, nDays) => ({
+  id: uid(), title, dest: '', start,
+  days: Array.from({ length: nDays }, newDay), pools: { want: [], place: [] },
+  packing: [], notes: [], archived: false, created: Date.now(), updated: Date.now(),
+});
+
+function normUrl(v) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+  try { const u = new URL(v); return /^https?:$/.test(u.protocol) ? u.href : null; } catch { return null; }
+}
+const parseCost = (v) => {
+  const s = String(v == null ? '' : v).normalize('NFKC').replace(/[^\d]/g, '');
+  return s ? Math.min(Number(s), 99999999) : null;
+};
+const isTime = (s) => typeof s === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+
+// 他の人が書いたデータ・読み込んだファイルは信用せず、必ずここを通して整える
+function normItem(i) {
+  if (!isObj(i)) return null;
+  const title = str(i.title, 200);
+  if (!title.trim()) return null;
+  const url = /^https?:\/\//i.test(i.url || '') ? normUrl(i.url) : '';
+  return {
+    id: str(i.id, 40) || uid(),
+    time: isTime(i.time) ? i.time : '',
+    end: isTime(i.end) ? i.end : '',
+    title,
+    cat: CATS.some((c) => c.id === i.cat) ? i.cat : 'other',
+    place: str(i.place, 200),
+    cost: Number.isFinite(i.cost) && i.cost >= 0 ? Math.floor(i.cost) : null,
+    url: url || '',
+    memo: str(i.memo, 3000),
+    kind: i.kind === 'want' || i.kind === 'place' ? i.kind : '',
+  };
+}
+const normPack = (p) => (isObj(p) && str(p.text, 100) ? { id: str(p.id, 40) || uid(), text: str(p.text, 100), done: !!p.done } : null);
+const normNote = (n) => (isObj(n) && (str(n.label, 60) || str(n.text, 5000)) ? { id: str(n.id, 40) || uid(), label: str(n.label, 60), text: str(n.text, 5000) } : null);
+const arr = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
+
+function normTrip(t) {
+  if (!isObj(t)) return null;
+  const days = arr(t.days, 60).map((d) => ({
+    id: str(d && d.id, 40) || uid(),
+    title: str(d && d.title, 100),
+    items: arr(d && d.items, 500).map(normItem).filter(Boolean),
+  }));
+  if (!days.length) days.push(newDay());
+  const src = isObj(t.pools) ? t.pools : {};
+  const pools = {};
+  for (const k of ['want', 'place']) pools[k] = arr(src[k], 300).map(normItem).filter(Boolean).map((i) => ({ ...i, kind: k }));
+  const r = {
+    id: str(t.id, 40) || uid(),
+    title: str(t.title, 100).trim() || '無題の旅行',
+    dest: str(t.dest, 100),
+    start: isDate(t.start) ? t.start : '',
+    days, pools,
+    packing: arr(t.packing, 500).map(normPack).filter(Boolean),
+    notes: arr(t.notes, 200).map(normNote).filter(Boolean),
+    archived: t.archived === true,
+    created: Number.isFinite(t.created) ? t.created : Date.now(),
+    updated: Number.isFinite(t.updated) ? t.updated : Date.now(),
+  };
+  return r;
+}
+const normState = (d) => ({ v: 2, trips: arr(d && d.trips, 500).map(normTrip).filter(Boolean) });
+
+let restoredFromPrev = false;
+function load() {
+  for (const k of [KEY, KEY_PREV]) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+      const d = normState(JSON.parse(raw));
+      if (k === KEY_PREV) restoredFromPrev = true;
+      return d;
+    } catch (e) { /* 次のキーを試す */ }
+  }
+  return { v: 2, trips: [] };
+}
+let saveWarned = false;
+function save() {
+  try {
+    const cur = localStorage.getItem(KEY);
+    if (cur) localStorage.setItem(KEY_PREV, cur);
+    localStorage.setItem(KEY, JSON.stringify(S));
+  } catch (e) {
+    if (!saveWarned) { saveWarned = true; toast('保存できませんでした(ブラウザの保存領域を確認してください)'); }
+  }
+}
+
+let S = load();
+const ui = { view: 'list', tripId: null, tab: 'plan', scrollToday: false, poolOpen: false, poolTab: 'want', dragging: false, pendingRender: false, drafts: {}, shared: null, sharedErr: '', showArchived: false };
+const curTrip = () => S.trips.find((t) => t.id === ui.tripId) || null;
+function commit(trip) {
+  if (trip) { trip.updated = Date.now(); histPush(trip); }
+  if (toastHasAct) { $('#toast').classList.remove('show'); toastHasAct = false; }   // 古い「元に戻す」を残さない
+  save();
+  render();
+}
+
+/* ========== 日程の計算・操作 ========== */
+const dayDate = (t, i) => (t.start ? addDays(t.start, i) : '');
+const nightsLabel = (n) => (n <= 1 ? '日帰り' : `${n - 1}泊${n}日`);
+const sumCost = (items) => items.reduce((a, i) => a + (i.cost || 0), 0);
+const tripCost = (t) => t.days.reduce((a, d) => a + sumCost(d.items), 0);
+const poolCount = (t) => t.pools.want.length + t.pools.place.length;
+
+// ゾーン: 'day:<id>' | 'pool:want' | 'pool:place'
+function zoneArr(t, z) {
+  if (z.startsWith('pool:')) return t.pools[z.slice(5)] || null;
+  if (z.startsWith('day:')) { const d = t.days.find((x) => x.id === z.slice(4)); return d ? d.items : null; }
+  return null;
+}
+function locate(t, id) {
+  for (const d of t.days) {
+    const i = d.items.findIndex((x) => x.id === id);
+    if (i >= 0) return { arr: d.items, idx: i, item: d.items[i], zone: 'day:' + d.id, day: d };
+  }
+  for (const k of ['want', 'place']) {
+    const i = t.pools[k].findIndex((x) => x.id === id);
+    if (i >= 0) return { arr: t.pools[k], idx: i, item: t.pools[k][i], zone: 'pool:' + k, day: null };
+  }
+  return null;
+}
+function moveItem(t, id, zone, idx) {
+  const loc = locate(t, id);
+  const dst = zoneArr(t, zone);
+  if (!loc || !dst) return;
+  loc.arr.splice(loc.idx, 1);
+  if (zone.startsWith('pool:')) loc.item.kind = zone.slice(5);
+  dst.splice(Math.max(0, Math.min(idx, dst.length)), 0, loc.item);
+  commit(t);
+}
+// 時刻のある予定を、時刻の遅い予定の手前に入れる(なければ末尾)
+function insertByTime(items, it) {
+  if (it.time) {
+    const k = items.findIndex((x) => x.time && x.time > it.time);
+    if (k >= 0) { items.splice(k, 0, it); return; }
+  }
+  items.push(it);
+}
+// 時刻順に並べ替え。時刻のない予定は元の位置に残す
+function sortDayByTime(day) {
+  const slots = [];
+  day.items.forEach((it, k) => { if (it.time) slots.push(k); });
+  const sorted = slots.map((k) => day.items[k]).sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+  slots.forEach((k, n) => { day.items[k] = sorted[n]; });
+}
+
+function status(t) {
+  if (!t.start) return { k: 'none', text: '' };
+  const end = addDays(t.start, t.days.length - 1);
+  const td = todayStr();
+  if (td < t.start) return { k: 'soon', text: `あと${diffDays(t.start, td)}日` };
+  if (td <= end) return { k: 'now', text: `旅行中(${diffDays(td, t.start) + 1}日目)` };
+  return { k: 'past', text: '終了' };
+}
+const mapUrl = (q) => 'https://maps.apple.com/?q=' + encodeURIComponent(q);
+
+/* ========== 画面遷移・描画 ========== */
+let lastKey = '';
+function go(view, tripId, tab) {
+  const was = ui.view;
+  ui.view = view;
+  if (tripId !== undefined) ui.tripId = tripId;
+  ui.tab = tab || 'plan';
+  ui.scrollToday = view === 'trip';
+  const t = view === 'trip' ? curTrip() : null;
+  if (t && (was !== 'trip' || hist.id !== t.id)) histInit(t);   // 旅行を開き直したら履歴も新しくする
+  render();
+}
+
+function render() {
+  if (ui.dragging) { ui.pendingRender = true; return; }
+  ui.pendingRender = false;
+  const app = $('#app');
+  const key = `${ui.view}|${ui.tripId}|${ui.tab}`;
+  const y = window.scrollY;
+  const ae = document.activeElement;
+  const focusKey = ae && ae.dataset && ae.dataset.draft;
+  const poolScroll = $('.pool-scroll');
+  const ps = poolScroll ? poolScroll.scrollTop : 0;
+  const t = ui.view === 'trip' ? curTrip() : null;
+  app.replaceChildren(ui.view === 'shared' ? sharedView() : t ? tripView(t) : listView());
+  const onPlan = !!t && ui.tab === 'plan';
+  document.body.classList.toggle('has-pool', onPlan);
+  document.body.classList.toggle('pool-open', onPlan && ui.poolOpen);
+  if (key !== lastKey) window.scrollTo(0, 0); else window.scrollTo(0, y);
+  lastKey = key;
+  const np = $('.pool-scroll');
+  if (np) np.scrollTop = ps;
+  if (ui.scrollToday) {
+    ui.scrollToday = false;
+    const el = $('[data-today]');
+    if (el && ui.tab === 'plan') el.scrollIntoView({ block: 'start' });
+  }
+  if (focusKey) {
+    const el = $(`[data-draft="${focusKey}"]`);
+    if (el) { el.focus(); const n = el.value.length; try { el.setSelectionRange(n, n); } catch { /* */ } }
+  }
+}
+
+// 入力途中の文字は、画面が再描画されても消えないよう、ui.drafts に保持する
+function draftInput(key, attrs) {
+  return h('input', { ...attrs, 'data-draft': key, value: ui.drafts[key] || '', oninput: (e) => { ui.drafts[key] = e.target.value; } });
+}
+
+/* ---------- 旅行一覧 ---------- */
+// 一覧の並び順: これから・旅行中(出発日の近い順) → 日付未定(更新の新しい順) → 終わった旅行(新しい順)
+function sortTrips(list) {
+  const td = todayStr();
+  const grp = (t) => (!t.start ? 1 : addDays(t.start, t.days.length - 1) < td ? 2 : 0);
+  return [...list].sort((a, b) => {
+    const ga = grp(a), gb = grp(b);
+    if (ga !== gb) return ga - gb;
+    if (ga === 0) return a.start < b.start ? -1 : a.start > b.start ? 1 : 0;
+    if (ga === 2) return a.start < b.start ? 1 : a.start > b.start ? -1 : 0;
+    return b.updated - a.updated;
+  });
+}
+const sortArchived = (list) => [...list].sort((a, b) => (b.start || '').localeCompare(a.start || '') || b.updated - a.updated);
+
+function listView() {
+  const trips = sortTrips(S.trips.filter((t) => !t.archived));
+  const arch = sortArchived(S.trips.filter((t) => t.archived));
+
+  return h('div', { class: 'wrap' },
+    h('div', { class: 'home-head' },
+      h('div', null, h('h1', { text: 'たびのしおり' }), h('p', { text: '旅の日程・持ち物・メモをひとまとめに' })),
+      h('div', { class: 'acts' },
+        h('button', { class: 'ghostbtn', onclick: dataSheet }, 'データ'))),
+    h('button', { class: 'btn primary block', onclick: () => tripSheet(null) }, '+ 新しい旅行をつくる'),
+    h('div', { style: { height: '14px' } }),
+    trips.length === 0
+      ? (arch.length
+        ? h('div', { class: 'empty' }, h('p', { text: '表示中の旅行はありません。アーカイブ済みの旅行は、下から開けます。' }))
+        : h('div', { class: 'empty' },
+          h('h2', { text: 'まだ旅行がありません' }),
+          h('p', { text: '「新しい旅行をつくる」から日程を作れます。' }),
+          h('button', { class: 'btn', onclick: addSample }, 'サンプルを見てみる')))
+      : trips.map(tripCard),
+    arch.length ? h('div', { style: { marginTop: '18px' } },
+      h('button', { class: 'archtoggle', onclick: () => { ui.showArchived = !ui.showArchived; render(); } },
+        h('span', { text: `アーカイブ済み(${arch.length}件)` }), h('span', { text: ui.showArchived ? '▲' : '▼' })),
+      ui.showArchived ? arch.map(tripCard) : null) : null);
+}
+
+function tripCard(t) {
+  const st = status(t);
+  const n = t.days.length;
+  const cost = tripCost(t);
+  const range = t.start ? `${mdw(t.start)} 〜 ${mdw(addDays(t.start, n - 1))}` : '日付未定';
+  const cnt = t.days.reduce((a, d) => a + d.items.length, 0);
+  const pc = poolCount(t);
+  return h('button', { class: 'trip-card', onclick: () => go('trip', t.id) },
+    h('div', { class: 'row1' },
+      h('div', { class: 'name', text: t.title }),
+      h('div', { class: 'badges' },
+        t.archived ? h('span', { class: 'badge past', text: 'アーカイブ' }) : null,
+        st.text ? h('span', { class: 'badge ' + st.k, text: st.text }) : null)),
+    h('div', { class: 'meta', text: [t.dest, range, nightsLabel(n)].filter(Boolean).join(' · ') }),
+    h('div', { class: 'meta', text: `予定 ${cnt}件` + (pc ? ` · 候補 ${pc}件` : '') + (cost ? ` · 合計 ${yen(cost)}` : '') }));
+}
+
+/* ---------- 旅行詳細 ---------- */
+function tripView(t) {
+  const done = t.packing.filter((p) => p.done).length;
+  const tab = (id, label, extra) =>
+    h('button', { class: ui.tab === id ? 'on' : '', onclick: () => { if (ui.tab !== id) go('trip', t.id, id); } }, label, extra ? h('small', { text: extra }) : null);
+
+  const body = ui.tab === 'pack' ? packView(t) : ui.tab === 'notes' ? notesView(t) : planView(t);
+  return h('div', null,
+    h('header', { class: 'top', 'data-wide': ui.tab === 'plan' ? '1' : null },
+      h('div', { class: 'bar1' },
+        h('button', { class: 'ghostbtn', onclick: () => go('list'), 'aria-label': '旅行一覧へ戻る' }, '‹ 一覧'),
+        h('div', { class: 'ttl-wrap', role: 'button', tabindex: '0', 'aria-label': '旅行を切り替える', onclick: () => switchSheet(t),
+          onkeydown: (e) => { if (e.key === 'Enter') switchSheet(t); } },
+          h('div', { class: 'trip-title' }, h('span', { class: 'tt', text: t.title }), h('span', { class: 'caret', text: '▾' })),
+          h('div', { class: 'trip-dest', text: [t.archived ? 'アーカイブ済み' : '', t.dest].filter(Boolean).join(' · ') })),
+        hist.id === t.id && hist.pos > 0 ? h('button', { class: 'ghostbtn icon', onclick: undo, 'aria-label': '元に戻す' }, '↶') : null,
+        hist.id === t.id && hist.pos < hist.states.length - 1 ? h('button', { class: 'ghostbtn icon', onclick: redo, 'aria-label': 'やり直す' }, '↷') : null,
+        h('button', { class: 'ghostbtn', onclick: () => tripMenu(t), 'aria-label': 'メニュー' }, '•••')),
+      h('div', { class: 'tabs' },
+        tab('plan', '日程'),
+        tab('pack', '持ち物', t.packing.length ? `${done}/${t.packing.length}` : ''),
+        tab('notes', 'メモ', t.notes.length ? String(t.notes.length) : ''))),
+    h('div', { class: 'wrap' + (ui.tab === 'plan' ? ' wide' : '') }, body));
+}
+
+function planView(t) {
+  const n = t.days.length;
+  const td = todayStr();
+  const cost = tripCost(t);
+  const sum = [
+    t.start ? h('span', null, h('b', { text: `${mdw(t.start)} 〜 ${mdw(addDays(t.start, n - 1))}` })) : h('span', { text: '日付未定' }),
+    h('span', { text: nightsLabel(n) }),
+    cost ? h('span', null, '合計 ', h('b', { text: yen(cost) })) : null,
+  ];
+  const ns = nowState(t);
+  const sched = h('div', { class: 'sched' },
+    nowCard(t, false),
+    h('div', { class: 'summary' }, sum),
+    n > 1 ? h('div', { class: 'chips' }, t.days.map((d, i) => {
+      const date = dayDate(t, i);
+      return h('button', {
+        class: 'chip' + (date === td ? ' today' : ''),
+        onclick: () => { const el = document.getElementById('day-' + d.id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+      }, `${i + 1}日目` + (date ? ` ${mdw(date).replace(/\(.\)/, '')}` : ''));
+    })) : null,
+    t.days.map((d, i) => dayView(t, d, i, td, false, ns)),
+    h('button', { class: 'btn block', style: { marginTop: '22px' }, onclick: () => addDay(t) }, '+ 日を追加'));
+  return h('div', { class: 'plan-grid' }, poolView(t), sched);
+}
+
+/* ---------- 左ペイン: やりたいこと / 行きたい場所 ---------- */
+function poolView(t) {
+  const sec = (p) => {
+    const list = t.pools[p.id];
+    return h('section', { class: 'pool-sec', 'data-zone': 'pool:' + p.id, 'data-kind': p.id },
+      h('h3', null, p.name, h('small', { text: String(list.length) })),
+      h('form', { class: 'pool-add', onsubmit: (e) => {
+        e.preventDefault();
+        const key = 'pool-' + p.id;
+        const title = (ui.drafts[key] || '').trim();
+        if (!title) return;
+        list.push(newItem(title.slice(0, 200), p.id));
+        ui.drafts[key] = '';
+        commit(t);
+      } },
+        draftInput('pool-' + p.id, { type: 'text', placeholder: p.ph, maxlength: '200', autocomplete: 'off', enterkeyhint: 'done' }),
+        h('button', { class: 'btn small primary', type: 'submit' }, '追加')),
+      h('div', { class: 'pool-list', 'data-list': '1' }, list.map((it) => poolCard(t, it))));
+  };
+  const total = poolCount(t);
+  return h('aside', { class: 'pool' + (ui.poolOpen ? ' open' : ''), 'data-tab': ui.poolTab },
+    h('button', { class: 'pool-bar', onclick: () => { ui.poolOpen = !ui.poolOpen; render(); } },
+      h('span', null, 'やりたいこと・行きたい場所 ', h('small', { text: `(${total}件)` })),
+      h('span', { text: ui.poolOpen ? '▼' : '▲' })),
+    h('div', { class: 'pool-body' },
+      h('div', { class: 'pool-seg' }, POOLS.map((p) => h('button', { class: ui.poolTab === p.id ? 'on' : '', onclick: () => { ui.poolTab = p.id; render(); } }, `${p.name} ${t.pools[p.id].length}`))),
+      h('div', { class: 'pool-scroll' },
+        h('p', { class: 'hintline', text: '思いついたことを自由にメモして、⋮⋮ をつかんで日程へドラッグ。「日程へ」ボタンでも入れられます。' }),
+        POOLS.map(sec))));
+}
+
+function poolCard(t, it) {
+  const sub = [];
+  if (it.place && it.place !== it.title) sub.push(it.place);
+  if (it.cost) sub.push(yen(it.cost));
+  return h('div', { class: 'pcard', 'data-drag': it.id, role: 'button', tabindex: '0', onclick: () => itemSheet(t, null, it.id),
+    onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) itemSheet(t, null, it.id); } },
+    h('div', { class: 'ptxt' }, h('div', { class: 'ttl', text: it.title }), sub.length ? h('div', { class: 'sub', text: sub.join(' · ') }) : null),
+    h('button', { class: 'padd', onclick: (e) => { e.stopPropagation(); pickDaySheet(t, it.id); } }, '日程へ'),
+    h('span', { class: 'handle', 'data-handle': '1', 'aria-label': 'ドラッグして移動', oncontextmenu: (e) => e.preventDefault() }, '⋮⋮'));
+}
+
+function pickDaySheet(t, itemId) {
+  const loc = locate(t, itemId);
+  if (!loc) return;
+  openSheet('どの日に入れますか?', h('div', { class: 'menu' }, t.days.map((d, i) => {
+    const date = dayDate(t, i);
+    return h('button', { onclick: () => {
+      const cur = locate(t, itemId);
+      const target = zoneArr(t, 'day:' + d.id);
+      if (!cur || !target) return;
+      cur.arr.splice(cur.idx, 1);
+      insertByTime(target, cur.item);
+      closeSheet();
+      commit(t);
+      const el = document.getElementById('day-' + d.id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } }, `${i + 1}日目${date ? ' ' + mdw(date) : ''}`, d.title ? h('small', { text: d.title }) : null);
+  })));
+}
+
+/* ---------- 日程(右ペイン) ---------- */
+function dayView(t, d, i, td, ro, ns) {
+  const date = dayDate(t, i);
+  const isToday = date && date === td;
+  const cost = sumCost(d.items);
+  const issues = ro ? new Map() : dayIssues(d);
+  const worst = [...issues.values()].some((x) => x.lv === 'bad') ? 'bad' : 'warn';
+  const today = isToday && ns && ns.dayIdx === i ? ns : null;
+  return h('section', { class: 'day', id: 'day-' + d.id, 'data-zone': ro ? null : 'day:' + d.id, 'data-today': isToday ? '1' : null },
+    h('div', { class: 'dayhead' },
+      h('span', { class: 'dn', text: `${i + 1}日目` }),
+      date ? h('span', { class: 'dd', text: mdw(date) }) : null,
+      isToday ? h('span', { class: 'today-tag', text: '今日' }) : null,
+      h('span', { class: 'sp' }),
+      issues.size ? h('span', { class: 'dissue ' + worst, text: `要確認 ${issues.size}` }) : null,
+      cost ? h('span', { class: 'dc', text: yen(cost) }) : null,
+      ro ? null : h('button', { class: 'ghostbtn more', onclick: () => daySheet(t, d.id), 'aria-label': `${i + 1}日目の設定` }, '•••')),
+    d.title ? h('div', { class: 'dt', text: d.title }) : null,
+    h('div', { class: 'items', 'data-list': ro ? null : '1' }, d.items.length ? d.items.map((it) => itemRow(t, it, ro, issues.get(it.id), today ? (today.curIds.has(it.id) ? 'now' : today.past.has(it.id) ? 'past' : '') : '')) : h('div', { class: 'day-empty', text: ro ? '予定はありません' : '予定はまだありません(候補をドラッグ / 下のボタンで追加)' })),
+    ro ? null : h('button', { class: 'btn small add-item', onclick: () => itemSheet(t, 'day:' + d.id, null) }, '+ 予定を追加'));
+}
+
+function itemRow(t, it, ro, issue, st) {
+  const cat = catOf(it.cat);
+  const subEl = h('div', { class: 'sub' }, cat.name);
+  if (it.place) {
+    subEl.append(' · ', h('a', { href: mapUrl(it.place), target: '_blank', rel: 'noopener', onclick: (e) => e.stopPropagation(), text: it.place === it.title ? '地図で見る' : it.place }));
+  }
+  if (it.url) {
+    let host = it.url;
+    try { host = new URL(it.url).hostname; } catch { /* そのまま */ }
+    subEl.append(' · ', h('a', { href: it.url, target: '_blank', rel: 'noopener', onclick: (e) => e.stopPropagation(), text: host }));
+  }
+  const attrs = ro ? { class: 'item ro' + (st ? ' ' + st : '') } : { class: 'item' + (st ? ' ' + st : ''), 'data-drag': it.id, role: 'button', tabindex: '0', onclick: () => itemSheet(t, null, it.id),
+    onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) itemSheet(t, null, it.id); } };
+  return h('div', attrs,
+    h('div', { class: 'tm' + (it.time ? '' : ' none') }, it.time || '--:--', it.end ? h('small', { text: '〜' + it.end }) : null),
+    h('div', { class: 'bar', style: { background: cat.color } }),
+    h('div', { class: 'main' },
+      h('div', { class: 'ttl', text: it.title }),
+      subEl,
+      issue ? h('div', { class: 'issue ' + issue.lv }, h('b', { text: '要確認' }), issue.msg) : null,
+      it.memo ? h('div', { class: 'memo', text: it.memo }) : null),
+    h('div', { class: 'side' },
+      it.cost ? h('div', { class: 'cost', text: yen(it.cost) }) : h('div'),
+      ro ? null : h('span', { class: 'handle', 'data-handle': '1', 'aria-label': 'ドラッグして移動', oncontextmenu: (e) => e.preventDefault() }, '⋮⋮')));
+}
+
+function addDay(t) {
+  if (t.days.length >= 60) { toast('日数の上限は60日です'); return; }
+  t.days.push(newDay());
+  commit(t);
+  const el = document.getElementById('day-' + t.days[t.days.length - 1].id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ========== ドラッグ&ドロップ(ポインターイベントで自前実装) ==========
+   HTML5 の draggable は iPhone で不安定なので使わない。
+   - ⋮⋮ のハンドルをつかむと即ドラッグ(タッチ可)。マウスはカード全体をつかめる。
+   - data-zone を持つ要素(各日 / 左ペインの2リスト)の上で離すと、その中の位置に入る。 */
+const dnd = { s: null, noClickUntil: 0 };
+
+function dndDown(e) {
+  if (dnd.s) return;
+  const card = e.target.closest('[data-drag]');
+  if (!card) return;
+  const handle = e.target.closest('[data-handle]');
+  if (!handle) {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    if (e.target.closest('a,button,input,textarea,select,label')) return;
+  }
+  dnd.s = { card, id: card.dataset.drag, sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY, pid: e.pointerId, handle: !!handle, on: false, zone: null, idx: 0, ghost: null, ph: null, raf: 0, over: null };
+  window.addEventListener('pointermove', dndMove, { passive: false });
+  window.addEventListener('pointerup', dndUp);
+  window.addEventListener('pointercancel', dndCancel);
+  window.addEventListener('keydown', dndKey);
+}
+function dndMove(e) {
+  const s = dnd.s;
+  if (!s || e.pointerId !== s.pid) return;
+  s.x = e.clientX; s.y = e.clientY;
+  if (!s.on) {
+    if (Math.hypot(s.x - s.sx, s.y - s.sy) < (s.handle ? 4 : 6)) return;
+    dndStart();
+  }
+  e.preventDefault();
+  dndUpdate();
+}
+function dndStart() {
+  const s = dnd.s;
+  const r = s.card.getBoundingClientRect();
+  s.ox = s.sx - r.left; s.oy = s.sy - r.top;
+  s.ghost = s.card.cloneNode(true);
+  s.ghost.classList.add('ghost');
+  s.ghost.removeAttribute('data-drag');
+  Object.assign(s.ghost.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', margin: '0', zIndex: '60', pointerEvents: 'none' });
+  document.body.append(s.ghost);
+  s.card.classList.add('dragging');
+  s.ph = h('div', { class: 'ph' });
+  document.body.classList.add('dnd');
+  s.on = true;
+  ui.dragging = true;
+  s.raf = requestAnimationFrame(dndTick);
+}
+function dndUpdate() {
+  const s = dnd.s;
+  if (!s || !s.on) return;
+  s.ghost.style.left = (s.x - s.ox) + 'px';
+  s.ghost.style.top = (s.y - s.oy) + 'px';
+  let zone = null;
+  for (const el of document.elementsFromPoint(s.x, s.y)) {
+    const z = el.closest && el.closest('[data-zone]');
+    if (z) { zone = z; break; }
+  }
+  if (s.over && s.over !== zone) s.over.classList.remove('dz-over');
+  s.over = zone;
+  if (!zone) { s.ph.remove(); s.zone = null; document.querySelectorAll('.has-ph').forEach((el) => el.classList.remove('has-ph')); return; }
+  zone.classList.add('dz-over');
+  const list = zone.querySelector('[data-list]');
+  const kids = [...list.children].filter((c) => c.dataset.drag && c !== s.card);
+  let idx = 0;
+  for (const k of kids) { const b = k.getBoundingClientRect(); if (s.y > b.top + b.height / 2) idx++; }
+  s.zone = zone.dataset.zone; s.idx = idx;
+  const ref = kids[idx] || null;
+  if (s.ph.parentNode !== list || s.ph.nextElementSibling !== ref) list.insertBefore(s.ph, ref);
+  document.querySelectorAll('.items').forEach((el) => el.classList.toggle('has-ph', el === list));
+}
+function dndTick() {
+  const s = dnd.s;
+  if (!s || !s.on) return;
+  // 端に近づいたら自動スクロール(左ペイン内 → ペイン自体、それ以外 → ページ)
+  const pool = $('.pool-scroll');
+  let handled = false;
+  if (pool) {
+    const r = pool.getBoundingClientRect();
+    if (r.height > 0 && s.x >= r.left && s.x <= r.right && s.y >= r.top && s.y <= r.bottom) {
+      if (s.y < r.top + 36) pool.scrollTop -= 10; else if (s.y > r.bottom - 36) pool.scrollTop += 10;
+      handled = true;
+    }
+  }
+  if (!handled) {
+    const hd = $('.top');
+    const topLimit = (hd ? hd.getBoundingClientRect().bottom : 0) + 40;
+    const pl = $('.pool');
+    const bottomLimit = pl && getComputedStyle(pl).position === 'fixed' ? pl.getBoundingClientRect().top : window.innerHeight;
+    if (s.y < topLimit) window.scrollBy(0, -Math.min(18, (topLimit - s.y) / 3 + 4));
+    else if (s.y > bottomLimit - 50) window.scrollBy(0, Math.min(18, (s.y - (bottomLimit - 50)) / 3 + 4));
+  }
+  dndUpdate();
+  s.raf = requestAnimationFrame(dndTick);
+}
+function dndEnd() {
+  const s = dnd.s;
+  window.removeEventListener('pointermove', dndMove);
+  window.removeEventListener('pointerup', dndUp);
+  window.removeEventListener('pointercancel', dndCancel);
+  window.removeEventListener('keydown', dndKey);
+  if (!s) return null;
+  cancelAnimationFrame(s.raf);
+  if (s.ghost) s.ghost.remove();
+  if (s.ph) s.ph.remove();
+  if (s.over) s.over.classList.remove('dz-over');
+  s.card.classList.remove('dragging');
+  document.querySelectorAll('.has-ph').forEach((el) => el.classList.remove('has-ph'));
+  document.body.classList.remove('dnd');
+  ui.dragging = false;
+  dnd.s = null;
+  if (s.on) dnd.noClickUntil = Date.now() + 350;
+  return s;
+}
+function dndUp(e) {
+  if (!dnd.s || e.pointerId !== dnd.s.pid) return;
+  const s = dndEnd();
+  const t = curTrip();
+  if (s.on && s.zone && t) moveItem(t, s.id, s.zone, s.idx);
+  else if (ui.pendingRender) render();
+}
+function dndCancel() { dndEnd(); if (ui.pendingRender) render(); }
+function dndKey(e) { if (e.key === 'Escape') dndCancel(); }
+$('#app').addEventListener('pointerdown', dndDown);
+// ドラッグ直後に出る click を、カードの「編集を開く」に渡さない
+$('#app').addEventListener('click', (e) => { if (Date.now() < dnd.noClickUntil) { e.stopPropagation(); e.preventDefault(); } }, true);
+
+/* ---------- 持ち物 ---------- */
+function packView(t) {
+  const done = t.packing.filter((p) => p.done).length;
+  const total = t.packing.length;
+  const form = h('form', { class: 'pack-form', onsubmit: (e) => {
+    e.preventDefault();
+    const text = (ui.drafts.pack || '').trim();
+    if (!text) return;
+    t.packing.push({ id: uid(), text: text.slice(0, 100), done: false });
+    ui.drafts.pack = '';
+    commit(t);
+  } },
+    draftInput('pack', { type: 'text', placeholder: '持ち物を追加(例: 折りたたみ傘)', maxlength: '100', autocomplete: 'off', enterkeyhint: 'done' }),
+    h('button', { class: 'btn primary', type: 'submit' }, '追加'));
+
+  const list = total
+    ? h('div', { class: 'card' }, t.packing.map((p) => {
+        const id = 'pk-' + p.id;
+        return h('div', { class: 'pack-row' + (p.done ? ' done' : '') },
+          h('input', { type: 'checkbox', id, checked: p.done, onchange: (e) => { p.done = e.target.checked; commit(t); } }),
+          h('label', { for: id, text: p.text }),
+          h('button', { class: 'x', 'aria-label': `${p.text}を削除`, onclick: () => { t.packing = t.packing.filter((x) => x.id !== p.id); commit(t); toast(`「${p.text}」を削除しました`, { label: '元に戻す', fn: undo }); } }, '×'));
+      }))
+    : h('div', { class: 'empty' }, h('p', { text: '持ち物リストはまだ空です。' }));
+
+  return h('div', null,
+    form,
+    total ? h('div', null,
+      h('div', { class: 'hint', text: `${done} / ${total} 準備できました` }),
+      h('div', { class: 'progress' }, h('i', { style: { width: (total ? (done / total) * 100 : 0) + '%' } }))) : null,
+    list,
+    h('div', { class: 'btn-row', style: { marginTop: '14px' } },
+      h('button', { class: 'btn small', onclick: () => {
+        const have = new Set(t.packing.map((p) => p.text));
+        const add = PACK_DEFAULTS.filter((x) => !have.has(x));
+        if (!add.length) { toast('定番はすべて入っています'); return; }
+        add.forEach((text) => t.packing.push({ id: uid(), text, done: false }));
+        commit(t);
+        toast(`定番の持ち物を${add.length}件追加しました`);
+      } }, '定番の持ち物を追加'),
+      total && done ? h('button', { class: 'btn small', onclick: () => { t.packing.forEach((p) => { p.done = false; }); commit(t); } }, 'チェックをすべて外す') : null));
+}
+
+/* ---------- メモ ---------- */
+function notesView(t) {
+  return h('div', null,
+    h('div', { style: { height: '12px' } }),
+    h('button', { class: 'btn block', onclick: () => noteSheet(t, null) }, '+ メモを追加'),
+    t.notes.length === 0
+      ? h('div', { class: 'empty' }, h('p', { text: '宿の予約番号や集合場所など、日程に入れにくい情報を書いておけます。' }))
+      : t.notes.map((n) => h('div', { class: 'card note', role: 'button', tabindex: '0', onclick: () => noteSheet(t, n.id),
+          onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) noteSheet(t, n.id); } },
+          n.label ? h('div', { class: 'nl', text: n.label }) : null,
+          h('div', { class: 'nt', text: n.text }))));
+}
+
+/* ========== シート(モーダル) ========== */
+let sheetClose = null;
+function closeSheet() {
+  $('#sheetRoot').replaceChildren();
+  document.body.classList.remove('lock');
+  sheetClose = null;
+}
+function openSheet(title, ...body) {
+  closeSheet();
+  const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': title, onclick: (e) => e.stopPropagation() },
+    h('div', { class: 'sheet-head' }, h('h2', { text: title }), h('button', { onclick: closeSheet, 'aria-label': '閉じる' }, '×')),
+    body);
+  $('#sheetRoot').append(h('div', { class: 'backdrop', onclick: closeSheet }, sheet));
+  document.body.classList.add('lock');
+  sheetClose = closeSheet;
+  return sheet;
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheetClose) sheetClose(); });
+
+const field = (label, input, hint) => h('div', { class: 'field' }, h('label', { text: label }), input, hint ? h('div', { class: 'hint', text: hint }) : null);
+const spacer = (px = 14) => h('div', { style: { height: px + 'px' } });
+
+/* ---------- 旅行の作成・編集 ---------- */
+function tripSheet(t) {
+  const creating = !t;
+  const title = h('input', { type: 'text', value: creating ? '' : t.title, placeholder: '例: 京都 秋の2泊3日', maxlength: '100' });
+  const dest = h('input', { type: 'text', value: creating ? '' : t.dest, placeholder: '例: 京都府', maxlength: '100' });
+  const start = h('input', { type: 'date', value: creating ? '' : t.start });
+  const days = creating ? h('input', { type: 'number', inputmode: 'numeric', min: '1', max: '30', value: '3' }) : null;
+  const sheet = openSheet(creating ? '新しい旅行' : '旅行の情報',
+    field('旅行のタイトル', title),
+    field('行き先(任意)', dest),
+    field('出発日(任意)', start, '決まっていなければ空のままで大丈夫です。あとから変更できます。'),
+    h('button', { class: 'link-btn', style: { marginTop: '-8px', marginBottom: '14px' }, onclick: () => { start.value = ''; } }, '出発日を空にする'),
+    days ? field('日数', days, '1日だけなら日帰りの扱いになります。') : null,
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn', onclick: closeSheet }, 'キャンセル'),
+      h('button', { class: 'btn primary', onclick: () => {
+        const name = title.value.trim();
+        if (!name) { toast('タイトルを入力してください'); title.focus(); return; }
+        const d = isDate(start.value) ? start.value : '';
+        if (creating) {
+          const n = Math.max(1, Math.min(30, parseInt(days.value, 10) || 1));
+          const nt = newTrip(name, d, n);
+          nt.dest = dest.value.trim();
+          S.trips.push(nt);
+          save();
+          closeSheet();
+          go('trip', nt.id);
+        } else {
+          t.title = name; t.dest = dest.value.trim(); t.start = d;
+          closeSheet();
+          commit(t);
+        }
+      } }, creating ? 'つくる' : '保存')));
+  setTimeout(() => { if (creating) title.focus(); }, 50);
+  return sheet;
+}
+
+/* ---------- 日の設定 ---------- */
+function daySheet(t, dayId) {
+  const i = t.days.findIndex((x) => x.id === dayId);
+  if (i < 0) return;
+  const d = t.days[i];
+  const date = dayDate(t, i);
+  const title = h('input', { type: 'text', value: d.title, placeholder: '例: 嵐山・嵯峨野', maxlength: '100' });
+  openSheet(`${i + 1}日目${date ? ' ' + mdw(date) : ''}`,
+    field('この日のタイトル(任意)', title),
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn', onclick: closeSheet }, 'キャンセル'),
+      h('button', { class: 'btn primary', onclick: () => {
+        const cur = t.days.find((x) => x.id === dayId);
+        if (cur) cur.title = title.value.trim();
+        closeSheet();
+        commit(t);
+      } }, '保存')),
+    spacer(),
+    h('button', { class: 'btn block', onclick: () => routeSheet(t, dayId) }, 'この日のルートを地図で開く'),
+    spacer(8),
+    h('button', { class: 'btn block', onclick: () => {
+      const cur = t.days.find((x) => x.id === dayId);
+      if (!cur) return;
+      sortDayByTime(cur);
+      closeSheet();
+      commit(t);
+      toast('時刻順に並べ替えました(時刻のない予定は元の位置のままです)');
+    } }, '時刻順に並べ替える'),
+    spacer(8),
+    h('button', { class: 'btn danger block', onclick: () => {
+      const cur = t.days.find((x) => x.id === dayId);
+      if (!cur) return;
+      if (t.days.length <= 1) { toast('最後の1日は削除できません'); return; }
+      const idx = t.days.indexOf(cur);
+      const msg = `${idx + 1}日目を削除します。` + (cur.items.length ? `\n予定${cur.items.length}件は、左の「やりたいこと」「行きたい場所」に戻ります。` : '') + (idx < t.days.length - 1 ? '\n以降の日程は1日ずつ前にずれます。' : '') + '\nよろしいですか?';
+      if (!confirm(msg)) return;
+      cur.items.forEach((it) => { it.kind = it.kind === 'place' ? 'place' : 'want'; t.pools[it.kind].push(it); });
+      t.days = t.days.filter((x) => x !== cur);
+      closeSheet();
+      commit(t);
+      toast('日を削除しました', { label: '元に戻す', fn: undo });
+    } }, 'この日を削除'));
+}
+
+/* ---------- 予定の追加・編集 ----------
+   where: 新規の追加先ゾーン('day:<id>' / 'pool:want' / 'pool:place')。編集のときは null で itemId を渡す */
+function itemSheet(t, where, itemId) {
+  const found = itemId ? locate(t, itemId) : null;
+  if (itemId && !found) return;
+  const it = found ? { ...found.item } : newItem('', where && where.startsWith('pool:') ? where.slice(5) : '');
+  if (!found) { it.cat = 'sight'; it.place = ''; }
+  let cat = it.cat;
+  const zone0 = found ? found.zone : where;
+
+  const titleEl = h('input', { type: 'text', value: it.title, placeholder: '例: 清水寺を散策', maxlength: '200' });
+  const timeEl = h('input', { type: 'time', value: it.time });
+  const endEl = h('input', { type: 'time', value: it.end });
+  const placeEl = h('input', { type: 'text', value: it.place, placeholder: '例: 京都市東山区清水1丁目294', maxlength: '200' });
+  const costEl = h('input', { type: 'text', inputmode: 'numeric', value: it.cost == null ? '' : String(it.cost), placeholder: '例: 1500' });
+  const urlEl = h('input', { type: 'text', inputmode: 'url', value: it.url, placeholder: '例: https://…', autocapitalize: 'off', autocomplete: 'off' });
+  const memoEl = h('textarea', { placeholder: '予約番号・持ち物・注意点など', maxlength: '3000' });
+  memoEl.value = it.memo;
+  const zoneSel = h('select', null,
+    t.days.map((d, i) => {
+      const date = dayDate(t, i);
+      return h('option', { value: 'day:' + d.id, text: `${i + 1}日目${date ? ' ' + mdw(date) : ''}${d.title ? ' ' + d.title : ''}` });
+    }),
+    POOLS.map((p) => h('option', { value: 'pool:' + p.id, text: `(未定)${p.name}` })));
+  zoneSel.value = zone0;
+
+  const catBtns = CATS.map((c) => h('button', { type: 'button', class: c.id === cat ? 'on' : '', onclick: (e) => {
+    cat = c.id;
+    catBtns.forEach((b) => b.classList.remove('on'));
+    e.currentTarget.classList.add('on');
+  } }, h('i', { style: { background: c.color } }), c.name));
+
+  openSheet(found ? '予定を編集' : '予定を追加',
+    field('入れる場所', zoneSel, '「(未定)」を選ぶと、左のリストに置いておけます。'),
+    field('タイトル', titleEl),
+    h('div', { class: 'two' }, field('開始時刻', timeEl), field('終了時刻(任意)', endEl)),
+    h('div', { class: 'hint', style: { marginTop: '-8px', marginBottom: '14px' }, text: '並び順はドラッグで自由に変えられます。時刻順に揃えたいときは、日の「•••」から並べ替えできます。' }),
+    h('div', { class: 'field' }, h('div', { class: 'lbl', text: '種類' }), h('div', { class: 'catpick' }, catBtns)),
+    field('場所(任意)', placeEl, '入力すると、日程画面から地図アプリで開けます。'),
+    field('費用(任意・円)', costEl),
+    field('リンク(任意)', urlEl, '予約ページ・お店のページなど'),
+    field('メモ(任意)', memoEl),
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn', onclick: closeSheet }, 'キャンセル'),
+      h('button', { class: 'btn primary', onclick: () => {
+        const title = titleEl.value.trim();
+        if (!title) { toast('タイトルを入力してください'); titleEl.focus(); return; }
+        const url = normUrl(urlEl.value);
+        if (url === null) { toast('リンクの形式が正しくありません'); urlEl.focus(); return; }
+        const target = zoneArr(t, zoneSel.value);
+        if (!target) { toast('その日はもうありません。入れる場所を選び直してください'); return; }
+        const obj = {
+          id: it.id, time: timeEl.value, end: endEl.value, title, cat,
+          place: placeEl.value.trim(), cost: parseCost(costEl.value), url, memo: memoEl.value.trim(), kind: it.kind,
+        };
+        if (zoneSel.value.startsWith('pool:')) obj.kind = zoneSel.value.slice(5);
+        const cur = itemId ? locate(t, itemId) : null;    // 保存時に探し直す(他の人が動かしていても追従)
+        if (cur && cur.arr === target) target[cur.idx] = obj;
+        else {
+          if (cur) cur.arr.splice(cur.idx, 1);
+          if (zoneSel.value.startsWith('day:')) insertByTime(target, obj); else target.push(obj);
+        }
+        closeSheet();
+        commit(t);
+      } }, '保存')),
+    found ? h('div', null,
+      spacer(),
+      h('button', { class: 'btn danger block', onclick: () => {
+        if (!confirm(`「${found.item.title}」を削除します。よろしいですか?`)) return;
+        const cur = locate(t, itemId);
+        if (cur) cur.arr.splice(cur.idx, 1);
+        closeSheet();
+        commit(t);
+        toast('予定を削除しました', { label: '元に戻す', fn: undo });
+      } }, 'この予定を削除')) : null);
+  if (!found) setTimeout(() => titleEl.focus(), 50);
+}
+
+/* ---------- メモの追加・編集 ---------- */
+function noteSheet(t, noteId) {
+  const n = noteId ? t.notes.find((x) => x.id === noteId) : null;
+  if (noteId && !n) return;
+  const label = h('input', { type: 'text', value: n ? n.label : '', placeholder: '例: 宿の予約番号', maxlength: '60' });
+  const text = h('textarea', { placeholder: '内容', maxlength: '5000' });
+  text.value = n ? n.text : '';
+  openSheet(n ? 'メモを編集' : 'メモを追加',
+    field('見出し', label),
+    h('div', { class: 'catpick', style: { margin: '-6px 0 14px' } }, NOTE_LABELS.map((l) => h('button', { type: 'button', onclick: () => { label.value = l; } }, l))),
+    field('内容', text),
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn', onclick: closeSheet }, 'キャンセル'),
+      h('button', { class: 'btn primary', onclick: () => {
+        const l = label.value.trim(), x = text.value.trim();
+        if (!l && !x) { toast('見出しか内容を入力してください'); return; }
+        const cur = noteId ? t.notes.find((q) => q.id === noteId) : null;
+        if (cur) { cur.label = l; cur.text = x; } else t.notes.push({ id: uid(), label: l, text: x });
+        closeSheet();
+        commit(t);
+      } }, '保存')),
+    n ? h('div', null,
+      spacer(),
+      h('button', { class: 'btn danger block', onclick: () => {
+        if (!confirm('このメモを削除します。よろしいですか?')) return;
+        t.notes = t.notes.filter((x) => x.id !== noteId);
+        closeSheet();
+        commit(t);
+        toast('メモを削除しました', { label: '元に戻す', fn: undo });
+      } }, 'このメモを削除')) : null);
+}
+
+/* ---------- 旅行の切り替え(ヘッダーの旅行名をタップ) ---------- */
+function switchSheet(cur) {
+  const row = (t) => {
+    const st = status(t);
+    const n = t.days.length;
+    const range = t.start ? `${mdw(t.start)} 〜 ${mdw(addDays(t.start, n - 1))}` : '日付未定';
+    return h('button', { class: t.id === cur.id ? 'cur' : '', onclick: () => { closeSheet(); if (t.id !== cur.id) go('trip', t.id); } },
+      h('span', { class: 'sw-main' },
+        h('span', { class: 'sw-name', text: t.title }),
+        h('small', { text: [t.dest, range, nightsLabel(n)].filter(Boolean).join(' · ') })),
+      t.id === cur.id ? h('span', { class: 'badge', text: '表示中' }) : (st.text ? h('span', { class: 'badge ' + st.k, text: st.text }) : null));
+  };
+  const active = sortTrips(S.trips.filter((t) => !t.archived));
+  const arch = sortArchived(S.trips.filter((t) => t.archived));
+  const lbl = (text) => h('div', { style: { fontSize: '12px', fontWeight: '700', color: 'var(--dim)', margin: '14px 0 2px' }, text });
+  openSheet('旅行を切り替える',
+    h('div', { class: 'menu switch' }, active.map(row)),
+    arch.length ? [lbl(`アーカイブ済み(${arch.length}件)`), h('div', { class: 'menu switch' }, arch.map(row))] : null,
+    spacer(10),
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn', onclick: () => { closeSheet(); go('list'); } }, '旅行の一覧へ'),
+      h('button', { class: 'btn', onclick: () => { closeSheet(); tripSheet(null); } }, '+ 新しい旅行')),
+    spacer(8),
+    h('button', { class: 'btn block', onclick: () => { closeSheet(); tripSheet(cur); } }, 'この旅行のタイトル・出発日を編集'));
+}
+
+// アーカイブ: 一覧から隠すだけ(データは消えない。いつでも戻せる)
+function setArchived(t, on) {
+  t.archived = on;
+  t.updated = Date.now();
+  save();
+  if (on) {
+    ui.showArchived = false;
+    go('list');
+    toast('アーカイブしました', { label: '元に戻す', fn: () => { t.archived = false; t.updated = Date.now(); save(); render(); } });
+  } else {
+    render();
+    toast('アーカイブから戻しました');
+  }
+}
+
+/* ---------- 旅行メニュー ---------- */
+function tripMenu(t) {
+  const item = (label, sub, fn, cls) => h('button', { class: cls || '', onclick: () => { closeSheet(); fn(); } }, label, sub ? h('small', { text: sub }) : null);
+  openSheet('メニュー', h('div', { class: 'menu' },
+    item('旅行の情報を編集', 'タイトル・行き先・出発日', () => tripSheet(t)),
+    item('閲覧用リンクを発行', '見るだけのリンクを友だち・家族に送る', () => viewLinkSheet(t)),
+    item('テキストで共有・コピー', 'LINEやメールにそのまま貼れる形式', () => shareText(t)),
+    item('カレンダーに書き出し(.ics)', 'iPhone / Mac のカレンダーに取り込み・通知', () => icsSheet(t)),
+    item('印刷 / PDFにする', 'しおりとして紙やPDFに出力', () => printTrip(t)),
+    item('この旅行をファイルに書き出す', '別の端末へ移す・バックアップ用(JSON)', () => exportTrips([t], t.title)),
+    item('この旅行を複製', '持ち物のチェックは外れた状態でコピー', () => duplicateTrip(t)),
+    item(t.archived ? 'アーカイブから戻す' : 'アーカイブする', t.archived ? '一覧に表示します' : '一覧から隠します(データは消えません)', () => setArchived(t, !t.archived)),
+    item('この旅行を削除', null, () => deleteTrip(t), 'danger')));
+}
+
+function deleteTrip(t) {
+  if (!confirm(`「${t.title}」を削除します。元に戻せません。よろしいですか?`)) return;
+  S.trips = S.trips.filter((x) => x !== t);
+  save();
+  go('list');
+  toast('削除しました');
+}
+
+function duplicateTrip(t) {
+  const c = normTrip(JSON.parse(JSON.stringify(t)));
+  c.id = uid();
+  c.title = (t.title + ' のコピー').slice(0, 100);
+  c.days.forEach((d) => { d.id = uid(); d.items.forEach((i) => { i.id = uid(); }); });
+  ['want', 'place'].forEach((k) => c.pools[k].forEach((i) => { i.id = uid(); }));
+  c.packing.forEach((p) => { p.id = uid(); p.done = false; });
+  c.notes.forEach((n) => { n.id = uid(); });
+  c.archived = false;
+  c.created = c.updated = Date.now();
+  S.trips.push(c);
+  save();
+  go('trip', c.id);
+  toast('複製しました');
+}
+
+/* ---------- 共有(テキスト)・印刷 ---------- */
+function tripText(t) {
+  const L = [`【${t.title}】`];
+  if (t.dest) L.push(`行き先: ${t.dest}`);
+  const n = t.days.length;
+  L.push(t.start ? `${ymdw(t.start)} 〜 ${ymdw(addDays(t.start, n - 1))}(${nightsLabel(n)})` : nightsLabel(n));
+  t.days.forEach((d, i) => {
+    const date = dayDate(t, i);
+    L.push('', `■ ${i + 1}日目${date ? ' ' + mdw(date) : ''}${d.title ? ' ' + d.title : ''}`);
+    if (!d.items.length) L.push('(予定なし)');
+    d.items.forEach((it) => {
+      const tm = it.time ? it.time + (it.end ? '-' + it.end : '') : '';
+      L.push(`${tm ? tm + ' ' : '・'}${it.title}`);
+      if (it.place && it.place !== it.title) L.push(`    場所: ${it.place}`);
+      if (it.cost) L.push(`    費用: ${yen(it.cost)}`);
+      if (it.url) L.push(`    ${it.url}`);
+      if (it.memo) it.memo.split('\n').forEach((m) => L.push(`    ${m}`));
+    });
+  });
+  const cost = tripCost(t);
+  if (cost) L.push('', `合計費用: ${yen(cost)}`);
+  POOLS.forEach((p) => {
+    if (t.pools[p.id].length) { L.push('', `■ ${p.name}(未定)`); t.pools[p.id].forEach((it) => L.push(`・${it.title}`)); }
+  });
+  if (t.packing.length) {
+    L.push('', '■ 持ち物');
+    t.packing.forEach((p) => L.push(`${p.done ? '☑' : '☐'} ${p.text}`));
+  }
+  if (t.notes.length) {
+    L.push('', '■ メモ');
+    t.notes.forEach((m) => { if (m.label) L.push(`【${m.label}】`); if (m.text) L.push(m.text); });
+  }
+  return L.join('\n');
+}
+
+async function shareText(t) {
+  const text = tripText(t);
+  if (navigator.share) {
+    try { await navigator.share({ title: t.title, text }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(text); toast('クリップボードにコピーしました'); return; } catch (e) { /* 下へ */ }
+  const ta = h('textarea', { readonly: true, style: { minHeight: '260px' } });
+  ta.value = text;
+  openSheet('共有用テキスト', ta, h('div', { class: 'hint', text: '全選択してコピーしてください。' }));
+  ta.select();
+}
+
+function printTrip(t) {
+  const p = $('#print');
+  const n = t.days.length;
+  const kids = [
+    h('h1', { text: t.title }),
+    h('div', { class: 'pmeta', text: [t.dest, t.start ? `${ymdw(t.start)} 〜 ${ymdw(addDays(t.start, n - 1))}` : '', nightsLabel(n)].filter(Boolean).join('  /  ') }),
+  ];
+  t.days.forEach((d, i) => {
+    const date = dayDate(t, i);
+    kids.push(h('h2', { text: `${i + 1}日目${date ? ' ' + mdw(date) : ''}${d.title ? '  ' + d.title : ''}` }));
+    kids.push(d.items.length ? h('table', null, d.items.map((it) => h('tr', null,
+      h('td', { class: 't', text: it.time ? it.time + (it.end ? '〜' + it.end : '') : '' }),
+      h('td', null,
+        h('div', null, h('b', { text: it.title }), ` (${catOf(it.cat).name})`),
+        it.place && it.place !== it.title ? h('div', { class: 'sm', text: it.place }) : null,
+        it.memo ? h('div', { class: 'sm', text: it.memo }) : null),
+      h('td', { class: 'c', text: it.cost ? yen(it.cost) : '' })))) : h('div', { class: 'sm', text: '(予定なし)' }));
+  });
+  const cost = tripCost(t);
+  if (cost) kids.push(h('div', { class: 'pmeta', style: { textAlign: 'right', marginTop: '8px' }, text: `合計費用 ${yen(cost)}` }));
+  POOLS.forEach((pl) => {
+    if (t.pools[pl.id].length) kids.push(h('h2', { text: `${pl.name}(未定)` }), h('ul', null, t.pools[pl.id].map((x) => h('li', { text: `・${x.title}` }))));
+  });
+  if (t.packing.length) {
+    kids.push(h('h2', { text: '持ち物' }), h('ul', null, t.packing.map((x) => h('li', { text: `${x.done ? '☑' : '☐'} ${x.text}` }))));
+  }
+  if (t.notes.length) {
+    kids.push(h('h2', { text: 'メモ' }));
+    t.notes.forEach((m) => kids.push(h('div', { class: 'pnote' }, m.label ? h('b', { text: m.label }) : null, m.label && m.text ? h('br') : null, m.text)));
+  }
+  p.replaceChildren(...kids);
+  setTimeout(() => window.print(), 50);
+}
+
+/* ========== 閲覧用リンク ==========
+   旅行の中身をそのまま URL の「#」以降に入れる(サーバーなし・どこにも保存されない)。
+   「#」以降はブラウザからサーバーへ送られないので、リンクを開いた人の端末の中だけで表示される。
+   形式: #v=<z|j><base64url>   z = deflate-raw で圧縮 / j = 無圧縮(圧縮に未対応のブラウザ用)
+   取り消しはできない(リンク自体がデータなので)。あとで編集した内容は反映されない(発行時点のスナップショット)。 */
+const hasCS = typeof CompressionStream === 'function' && typeof DecompressionStream === 'function';
+const b64uEnc = (u8) => {
+  let bin = '';
+  for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+const b64uDec = (str64) => {
+  const b = str64.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b + '='.repeat((4 - (b.length % 4)) % 4));
+  const u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8;
+};
+async function deflate(u8) {
+  return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());
+}
+async function inflate(u8) {
+  const rd = new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+  const chunks = [];
+  let n = 0;
+  for (;;) {
+    const { done, value } = await rd.read();
+    if (done) break;
+    n += value.length;
+    if (n > 2e6) { rd.cancel(); throw new Error('too large'); }   // 展開後2MBまで(悪意あるリンクで固まらないように)
+    chunks.push(value);
+  }
+  const out = new Uint8Array(n);
+  let o = 0;
+  for (const c of chunks) { out.set(c, o); o += c.length; }
+  return out;
+}
+
+// o: { cost, pool, pack, memo } どれを含めるか。memo は「予定のメモ・リンク・メモタブ」(予約番号などが入りやすい)
+async function encodeTrip(t, o) {
+  const item = (i) => [i.time, i.end, i.title, i.cat, i.place, o.cost ? i.cost : null, o.memo ? i.url : '', o.memo ? i.memo : ''];
+  const data = { v: 1, t: t.title, d: t.dest, s: t.start || '', days: t.days.map((d) => [d.title, d.items.map(item)]) };
+  if (o.pool) data.q = [t.pools.want.map(item), t.pools.place.map(item)];
+  if (o.pack) data.k = t.packing.map((p) => p.text);
+  if (o.memo) data.n = t.notes.map((n) => [n.label, n.text]);
+  const json = new TextEncoder().encode(JSON.stringify(data));
+  return hasCS ? 'z' + b64uEnc(await deflate(json)) : 'j' + b64uEnc(json);
+}
+
+// リンクの中身は他人が作ったものなので、normXxx を通して整えてから使う
+async function decodeTrip(payload) {
+  if (payload.length > 400000) throw new Error('too long');
+  let bytes = b64uDec(payload.slice(1));
+  if (payload[0] === 'z') { if (!hasCS) throw new Error('nocs'); bytes = await inflate(bytes); }
+  else if (payload[0] !== 'j') throw new Error('format');
+  const d = JSON.parse(new TextDecoder().decode(bytes));
+  if (!isObj(d) || d.v !== 1) throw new Error('version');
+  const it = (a, kind) => (Array.isArray(a) ? normItem({ id: uid(), time: a[0], end: a[1], title: a[2], cat: a[3], place: a[4], cost: a[5], url: a[6], memo: a[7], kind }) : null);
+  const q = Array.isArray(d.q) ? d.q : [];
+  return normTrip({
+    id: uid(), title: d.t, dest: d.d, start: d.s,
+    days: arr(d.days, 60).map((x) => ({ id: uid(), title: Array.isArray(x) ? x[0] : '', items: arr(Array.isArray(x) ? x[1] : [], 500).map((a) => it(a, '')).filter(Boolean) })),
+    pools: { want: arr(q[0], 300).map((a) => it(a, 'want')).filter(Boolean), place: arr(q[1], 300).map((a) => it(a, 'place')).filter(Boolean) },
+    packing: arr(d.k, 500).map((x) => ({ id: uid(), text: x, done: false })),
+    notes: arr(d.n, 200).map((x) => (Array.isArray(x) ? { id: uid(), label: x[0], text: x[1] } : null)),
+  });
+}
+
+function viewLinkSheet(t) {
+  const opt = { cost: true, pool: false, pack: false, memo: false };
+  let url = '';
+  const box = h('input', { type: 'text', readonly: true, onfocus: (e) => e.target.select() });
+  const info = h('div', { class: 'hint' });
+  const warn = h('div', { class: 'msg', style: { display: 'none' } });
+  const refresh = async () => {
+    const payload = await encodeTrip(t, opt);
+    url = `${location.origin}${location.pathname}#v=${payload}`;
+    box.value = url;
+    const n = url.length;
+    info.textContent = `リンクの長さ: 約${n.toLocaleString('ja-JP')}文字`;
+    const local = /^(localhost|127\.|\[::1\])/.test(location.hostname);
+    const msg = local ? 'いまは開発用のアドレス(localhost)なので、このリンクは自分の端末でしか開けません。公開後のアドレスで作り直してください。'
+      : n > 60000 ? 'リンクが長すぎて、開けない場合があります。項目を減らすか、テキスト共有・PDFを使ってください。'
+      : n > 8000 ? 'リンクが長めです。LINEなどで途中が切れる場合は、項目を減らすか、テキスト共有・PDFを使ってください。' : '';
+    warn.textContent = msg;
+    warn.style.display = msg ? 'block' : 'none';
+  };
+  const check = (key, label, sub) => h('label', { class: 'optrow' },
+    h('input', { type: 'checkbox', checked: opt[key], onchange: (e) => { opt[key] = e.target.checked; refresh(); } }),
+    h('span', null, label, sub ? h('small', { text: sub }) : null));
+  openSheet('閲覧用リンクを発行',
+    h('p', { class: 'hint', style: { marginTop: '0' }, text: '日程を「見るだけ」のリンクにします。リンクを開いた人は、アプリの入っていない端末でも見られます。' }),
+    h('div', { class: 'lbl', style: { fontSize: '13px', fontWeight: '600', color: 'var(--dim)', margin: '10px 0 2px' }, text: 'リンクに含める内容(日程は必ず含まれます)' }),
+    check('cost', '費用（金額）'),
+    check('pool', 'やりたいこと・行きたい場所の候補'),
+    check('pack', '持ち物リスト'),
+    check('memo', 'メモ・リンク', '予定のメモ欄、予定のリンク、メモタブ。予約番号などが入っていないか確認してください'),
+    spacer(6),
+    h('div', { class: 'linkbox' }, box),
+    info,
+    warn,
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn', onclick: async () => { try { await navigator.clipboard.writeText(url); toast('リンクをコピーしました'); } catch { box.select(); toast('リンクを選択しました。コピーしてください'); } } }, 'コピー'),
+      navigator.share ? h('button', { class: 'btn primary', onclick: () => navigator.share({ title: t.title, text: `「${t.title}」のしおり`, url }).catch(() => {}) }, '送る') : null),
+    h('ul', { class: 'hint', style: { paddingLeft: '18px', margin: '12px 0 0' } },
+      h('li', { text: '発行した時点の内容です。あとから編集しても、送ったリンクには反映されません。変更したら、作り直して送り直してください。' }),
+      h('li', { text: 'リンクを知っている人は誰でも見られます。サーバーには何も保存されないため、送ったリンクを取り消すことはできません。' })));
+  refresh();
+}
+
+/* ---------- 閲覧専用の画面(リンクを開いた人に表示) ---------- */
+function openShared() {
+  const m = location.hash.match(/^#v=([A-Za-z0-9_-]+)$/);
+  if (!m) return false;
+  closeSheet();
+  ui.view = 'shared'; ui.shared = null; ui.sharedErr = '';
+  decodeTrip(m[1])
+    .then((t) => { ui.shared = t; ui.scrollToday = true; })
+    .catch((e) => { ui.sharedErr = String(e && e.message) === 'nocs' ? 'このブラウザでは、このリンクを開けません。ブラウザを新しくするか、送り主にテキストで送ってもらってください。' : 'リンクが壊れているか、途中で切れているようです。送り主に、もう一度リンクを送ってもらってください。'; })
+    .then(render);
+  return true;
+}
+function openApp() {
+  history.replaceState(null, '', location.pathname + location.search);
+  ui.shared = null; ui.sharedErr = '';
+  go('list');
+}
+function importShared() {
+  const t = ui.shared;
+  if (!t || !confirm(`「${t.title}」を、あなたのしおりに取り込みます(編集できるコピーが作られます)。よろしいですか?`)) return;
+  const c = normTrip(JSON.parse(JSON.stringify(t)));
+  c.id = uid();
+  c.created = c.updated = Date.now();
+  S.trips.push(c);
+  save();
+  history.replaceState(null, '', location.pathname + location.search);
+  ui.shared = null;
+  go('trip', c.id);
+  toast('取り込みました。自由に編集できます');
+}
+
+function sharedView() {
+  const t = ui.shared;
+  const head = h('header', { class: 'top' },
+    h('div', { class: 'bar1' },
+      h('div', { style: { width: '72px' } }),
+      h('div', { class: 'ttl-wrap', style: { cursor: 'default' } },
+        h('div', { class: 'trip-title', text: t ? t.title : 'たびのしおり' }),
+        h('div', { class: 'trip-dest', text: t ? [t.dest, '閲覧専用'].filter(Boolean).join(' · ') : '' })),
+      h('button', { class: 'ghostbtn', style: { minWidth: '72px' }, onclick: openApp }, 'アプリへ')));
+  if (ui.sharedErr) return h('div', null, head, h('div', { class: 'wrap' }, spacer(24), h('div', { class: 'msg err', text: ui.sharedErr }), h('button', { class: 'btn block', onclick: openApp }, 'たびのしおりを開く')));
+  if (!t) return h('div', null, head, h('div', { class: 'wrap' }, h('div', { class: 'empty' }, h('p', { text: '読み込んでいます…' }))));
+
+  const n = t.days.length;
+  const td = todayStr();
+  const cost = tripCost(t);
+  const list = (title, items, fmt) => items.length ? h('section', { style: { marginTop: '22px' } },
+    h('div', { class: 'dayhead' }, h('span', { class: 'dn', text: title })),
+    h('div', { class: 'card' }, items.map((x) => h('div', { class: 'pack-row' }, h('div', { style: { padding: '8px 0', overflowWrap: 'anywhere' } }, fmt(x)))))) : null;
+  return h('div', null, head,
+    h('div', { class: 'wrap' },
+      h('div', { class: 'summary' },
+        t.start ? h('span', null, h('b', { text: `${mdw(t.start)} 〜 ${mdw(addDays(t.start, n - 1))}` })) : h('span', { text: '日付未定' }),
+        h('span', { text: nightsLabel(n) }),
+        cost ? h('span', null, '合計 ', h('b', { text: yen(cost) })) : null),
+      nowCard(t, true),
+      h('div', { class: 'msg', style: { marginTop: '12px' } }, '共有された時点の内容を、見るだけで表示しています。編集はできません。'),
+      n > 1 ? h('div', { class: 'chips' }, t.days.map((d, i) => {
+        const date = dayDate(t, i);
+        return h('button', { class: 'chip' + (date === td ? ' today' : ''), onclick: () => { const el = document.getElementById('day-' + d.id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } },
+          `${i + 1}日目` + (date ? ` ${mdw(date).replace(/\(.\)/, '')}` : ''));
+      })) : null,
+      t.days.map((d, i) => dayView(t, d, i, td, true, nowState(t))),
+      list('やりたいこと', t.pools.want, (x) => x.title),
+      list('行きたい場所', t.pools.place, (x) => x.title),
+      list('持ち物', t.packing, (x) => '☐ ' + x.text),
+      t.notes.length ? h('section', { style: { marginTop: '22px' } },
+        h('div', { class: 'dayhead' }, h('span', { class: 'dn', text: 'メモ' })),
+        t.notes.map((m) => h('div', { class: 'card note ro' }, m.label ? h('div', { class: 'nl', text: m.label }) : null, h('div', { class: 'nt', text: m.text })))) : null,
+      spacer(24),
+      h('button', { class: 'btn primary block', onclick: importShared }, '自分のしおりに取り込む(編集できるコピー)'),
+      spacer(8),
+      h('div', { class: 'btn-row' },
+        h('button', { class: 'btn', onclick: () => shareText(t) }, 'テキストでコピー'),
+        h('button', { class: 'btn', onclick: () => printTrip(t) }, '印刷 / PDF'))));
+}
+
+/* ========== 元に戻す / やり直す ==========
+   旅行ごとに、commit のたびの全体スナップショットを最大60件持つ(旅行を開き直すとリセット)。
+   dnd / 削除 / 持ち物のチェックなど、commit を通る変更はすべて対象。旅行そのものの削除は対象外。 */
+const hist = { id: null, states: [], pos: -1 };
+const snap = (t) => JSON.stringify(t, (k, v) => (k === 'updated' ? undefined : v));
+function histInit(t) { hist.id = t.id; hist.states = [snap(t)]; hist.pos = 0; }
+function histPush(t) {
+  if (hist.id !== t.id) { histInit(t); return; }
+  const sn = snap(t);
+  if (sn === hist.states[hist.pos]) return;
+  hist.states.length = hist.pos + 1;
+  hist.states.push(sn);
+  if (hist.states.length > 60) hist.states.shift();
+  hist.pos = hist.states.length - 1;
+}
+function histRestore(t, json) {
+  const r = normTrip(JSON.parse(json));
+  t.title = r.title; t.dest = r.dest; t.start = r.start;
+  t.days = r.days; t.pools = r.pools; t.packing = r.packing; t.notes = r.notes;
+  t.updated = Date.now();
+}
+function histMove(step, msg) {
+  const t = curTrip();
+  if (!t || ui.view !== 'trip' || hist.id !== t.id) return;
+  const np = hist.pos + step;
+  if (np < 0 || np >= hist.states.length) { toast(step < 0 ? 'これ以上戻せません' : 'やり直せる操作はありません'); return; }
+  hist.pos = np;
+  histRestore(t, hist.states[np]);
+  closeSheet();
+  save();
+  render();
+  toast(msg);
+}
+const undo = () => histMove(-1, '元に戻しました');
+const redo = () => histMove(1, 'やり直しました');
+document.addEventListener('keydown', (e) => {
+  if (!(e.metaKey || e.ctrlKey) || e.altKey || e.key.toLowerCase() !== 'z' || ui.view !== 'trip' || sheetClose) return;
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;     // 入力欄では標準の取り消しを優先
+  e.preventDefault();
+  if (e.shiftKey) redo(); else undo();
+});
+
+/* ========== 時間の重なり・詰めすぎの警告 ==========
+   時刻のある予定を、並び順(配列の順)に前の時刻あり予定と比べる。
+   重なり(赤) / 時刻が前後している / 場所が違うのに間が15分未満(黄) */
+const toMin = (s) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3));
+const fmtDur = (m) => (m >= 60 ? `${Math.floor(m / 60)}時間${m % 60 ? (m % 60) + '分' : ''}` : `${m}分`);
+function dayIssues(d) {
+  const out = new Map();
+  let prev = null;
+  for (const it of d.items) {
+    if (!it.time) continue;
+    if (prev) {
+      const a = toMin(prev.time), b = toMin(it.time);
+      const pe = prev.end && toMin(prev.end) > a ? toMin(prev.end) : null;
+      if (pe !== null && b < pe) out.set(it.id, { lv: 'bad', msg: `前の予定(〜${prev.end})と時間が重なっています` });
+      else if (b < a) out.set(it.id, { lv: 'warn', msg: '前の予定より時刻が早くなっています(並び順を確認)' });
+      else if (pe !== null && b - pe < 15 && prev.place && it.place && prev.place !== it.place) out.set(it.id, { lv: 'warn', msg: `前の予定との間が${b - pe}分です。移動時間は足りますか?` });
+    }
+    prev = it;
+  }
+  return out;
+}
+
+/* ========== 旅行中モード(いま・次の予定) ==========
+   今日が旅行期間内のとき、今日の日の「いま」「次」を出す。終了時刻のない予定は、
+   次の予定の開始まで(最後の予定は2時間)続くものとして扱う。 */
+const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+function nowState(t) {
+  if (!t.start) return null;
+  const i = diffDays(todayStr(), t.start);
+  if (i < 0 || i >= t.days.length) return null;
+  const d = t.days[i];
+  const n = nowMin();
+  const timed = d.items.filter((x) => x.time).sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+  const endOf = (it) => {
+    const a = toMin(it.time);
+    if (it.end && toMin(it.end) > a) return toMin(it.end);
+    const nxt = timed.find((x) => toMin(x.time) > a);
+    return nxt ? toMin(nxt.time) : a + 120;
+  };
+  const past = new Set(timed.filter((x) => endOf(x) <= n).map((x) => x.id));
+  const cur = timed.filter((x) => toMin(x.time) <= n && !past.has(x.id));
+  const next = timed.find((x) => toMin(x.time) > n) || null;
+  return { dayIdx: i, day: d, n, timed, past, curIds: new Set(cur.map((x) => x.id)), current: cur.length ? cur[cur.length - 1] : null, next };
+}
+function nowCard(t, ro) {
+  const ns = nowState(t);
+  if (!ns) return null;
+  const date = dayDate(t, ns.dayIdx);
+  const place = (it) => it.place ? [' ', h('a', { href: mapUrl(it.place), target: '_blank', rel: 'noopener', text: it.place === it.title ? '地図' : it.place })] : null;
+  const row = (k, it, right) => h('div', { class: 'nr' },
+    h('span', { class: 'nk', text: k }),
+    h('div', { class: 'nt' }, h('b', { text: it.time }), it.title, it.end ? h('small', { text: `〜${it.end}` }) : null),
+    right);
+  const kids = [h('div', { class: 'nh', text: `今日 ・ ${ns.dayIdx + 1}日目 ${mdw(date)}${ns.day.title ? ' ・ ' + ns.day.title : ''}` })];
+  if (ns.current) kids.push(row('いま', ns.current, null));
+  if (ns.next) {
+    kids.push(row('次', ns.next, h('span', { class: 'ncount', text: `あと${fmtDur(toMin(ns.next.time) - ns.n)}` })));
+    if (ns.next.place) kids.push(h('div', { class: 'nr' }, h('span', { class: 'nk' }), h('div', { class: 'nt' }, h('small', null, ns.next.place, ' ・ ',
+      h('a', { href: mapUrl(ns.next.place), target: '_blank', rel: 'noopener', text: '地図' }), ' ・ ',
+      h('a', { href: `https://maps.apple.com/?daddr=${encodeURIComponent(ns.next.place)}&dirflg=r`, target: '_blank', rel: 'noopener', text: '現在地からの経路' })))));
+  } else if (!ns.current) {
+    kids.push(h('div', { class: 'nr' }, h('div', { class: 'nt', text: ns.timed.length ? '今日の時刻つきの予定はすべて終わりました' : (ns.day.items.length ? '今日の予定には時刻が入っていません' : '今日の予定はありません') })));
+  }
+  return h('div', { class: 'nowcard', 'data-now': '1' }, kids);
+}
+// 1分ごとに「あと○分」などを更新する(操作中・シート表示中・ドラッグ中は触らない)
+let lastNowKey = '';
+setInterval(() => {
+  if (document.hidden || ui.dragging || sheetClose) return;
+  const t = ui.view === 'shared' ? ui.shared : ui.view === 'trip' && ui.tab === 'plan' ? curTrip() : null;
+  const ns = t && nowState(t);
+  if (!ns) { lastNowKey = ''; return; }
+  const key = [ns.n, ns.current && ns.current.id, ns.next && ns.next.id].join('|');
+  if (key !== lastNowKey) { lastNowKey = key; render(); }
+}, 30000);
+
+/* ========== ルートを地図で開く ==========
+   場所の入っている予定を並び順につなぐ。Apple マップ(区間ごと)と Google マップ(全体・経由地つき)のリンクを作るだけ。 */
+function routeSheet(t, dayId) {
+  const i = t.days.findIndex((x) => x.id === dayId);
+  if (i < 0) return;
+  const d = t.days[i];
+  const stops = [];
+  for (const it of d.items) {
+    if (!it.place) continue;
+    if (stops.length && stops[stops.length - 1].place === it.place) continue;   // 同じ場所が続くときは1つに
+    stops.push({ place: it.place, title: it.title });
+  }
+  const skipped = d.items.filter((x) => !x.place).length;
+  let mode = 'transit';
+  const MODES = [['transit', '電車・バス'], ['walking', '徒歩'], ['driving', '車']];
+  const apple = { transit: 'r', walking: 'w', driving: 'd' };
+  const enc = encodeURIComponent;
+  const body = h('div');
+  const paint = () => {
+    const kids = [];
+    kids.push(h('div', { class: 'catpick', style: { margin: '4px 0 12px' } }, MODES.map(([id, name]) => h('button', { type: 'button', class: mode === id ? 'on' : '', onclick: () => { mode = id; paint(); } }, name))));
+    if (stops.length < 2) {
+      kids.push(h('div', { class: 'msg', text: stops.length ? 'ルートには、場所が入っている予定が2件以上必要です。' : 'この日の予定に「場所」が入っていません。予定の編集画面で「場所」を入力すると、ルートを作れます。' }));
+      if (stops.length === 1) kids.push(h('a', { class: 'btn block', href: mapUrl(stops[0].place), target: '_blank', rel: 'noopener', text: `${stops[0].place} を地図で開く` }));
+    } else {
+      const g = stops.slice(0, 11);   // Google は出発・到着 + 経由地9件まで
+      const gUrl = `https://www.google.com/maps/dir/?api=1&origin=${enc(g[0].place)}&destination=${enc(g[g.length - 1].place)}` + (g.length > 2 ? `&waypoints=${enc(g.slice(1, -1).map((x) => x.place).join('|'))}` : '') + `&travelmode=${mode}`;
+      if (mode === 'transit') kids.push(h('p', { class: 'hint', text: '電車・バスの経路は、経由地をまとめて指定できません。下の「区間ごと」で開いてください。' }));
+      else kids.push(h('a', { class: 'btn primary block', href: gUrl, target: '_blank', rel: 'noopener', text: `全体を Google マップで開く(${g.length}か所)` }), stops.length > 11 ? h('p', { class: 'hint', text: '地点が多いため、最初の11か所までです。残りは区間ごとに開いてください。' }) : null);
+      kids.push(h('div', { class: 'lbl', style: { fontSize: '13px', fontWeight: '600', color: 'var(--dim)', margin: '16px 0 4px' }, text: '区間ごとに開く' }));
+      kids.push(h('div', null, stops.slice(1).map((b, k) => {
+        const a = stops[k];
+        const aUrl = `https://maps.apple.com/?saddr=${enc(a.place)}&daddr=${enc(b.place)}&dirflg=${apple[mode]}`;
+        const gl = `https://www.google.com/maps/dir/?api=1&origin=${enc(a.place)}&destination=${enc(b.place)}&travelmode=${mode}`;
+        return h('div', { class: 'leg' },
+          h('div', { class: 'lt' }, `${a.place} → ${b.place}`, h('small', { text: `${a.title} → ${b.title}` })),
+          h('a', { class: 'btn small', href: aUrl, target: '_blank', rel: 'noopener', text: 'Apple' }),
+          h('a', { class: 'btn small', href: gl, target: '_blank', rel: 'noopener', text: 'Google' }));
+      })));
+    }
+    if (skipped) kids.push(h('p', { class: 'hint', text: `「場所」が空の予定${skipped}件は、ルートに含めていません。` }));
+    body.replaceChildren(...kids);
+  };
+  openSheet(`${i + 1}日目のルート`, body);
+  paint();
+}
+
+/* ========== カレンダー(.ics)に書き出し ==========
+   時刻は「フローティング」(その端末のタイムゾーンで解釈)。終了時刻がなければ1時間。
+   UID は予定の id から作るので、同じ予定を取り込み直すと(アプリによっては)更新になる。 */
+const icsEsc = (v) => String(v).replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+function icsFold(line) {
+  const enc = new TextEncoder();
+  if (enc.encode(line).length <= 75) return line;
+  const out = [];
+  let cur = '', len = 0;
+  for (const ch of line) {
+    const l = enc.encode(ch).length;
+    if (len + l > (out.length ? 74 : 75)) { out.push(cur); cur = ch; len = l; } else { cur += ch; len += l; }
+  }
+  out.push(cur);
+  return out.join('\r\n ');
+}
+const icsDT = (dt) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+function buildIcs(t, o) {
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//tabi-shiori//JA', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:' + icsEsc(t.title)];
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+  let n = 0;
+  t.days.forEach((d, i) => {
+    const date = dayDate(t, i);
+    const [y, m, dd] = date.split('-').map(Number);
+    d.items.forEach((it) => {
+      if (!it.time && !o.allday) return;
+      const desc = [catOf(it.cat).name, it.cost ? `費用 ${yen(it.cost)}` : '', it.memo, it.url].filter(Boolean).join('\n');
+      const ev = ['BEGIN:VEVENT', `UID:${it.id}@tabi-shiori`, `DTSTAMP:${stamp}`];
+      if (it.time) {
+        const [hh, mm] = it.time.split(':').map(Number);
+        const start = new Date(y, m - 1, dd, hh, mm);
+        let end;
+        if (it.end) { const [eh, em] = it.end.split(':').map(Number); end = new Date(y, m - 1, dd, eh, em); if (end <= start) end.setDate(end.getDate() + 1); }   // 日をまたぐ予定
+        else end = new Date(start.getTime() + 60 * 60000);
+        ev.push(`DTSTART:${icsDT(start)}`, `DTEND:${icsDT(end)}`);
+      } else {
+        const s1 = new Date(y, m - 1, dd), s2 = new Date(y, m - 1, dd + 1);
+        ev.push(`DTSTART;VALUE=DATE:${icsDT(s1).slice(0, 8)}`, `DTEND;VALUE=DATE:${icsDT(s2).slice(0, 8)}`);
+      }
+      ev.push('SUMMARY:' + icsEsc(it.title));
+      if (it.place) ev.push('LOCATION:' + icsEsc(it.place));
+      if (desc) ev.push('DESCRIPTION:' + icsEsc(desc));
+      if (it.url) ev.push('URL:' + it.url);
+      if (it.time && o.alarm) ev.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(it.title), 'TRIGGER:-PT30M', 'END:VALARM');
+      ev.push('END:VEVENT');
+      L.push(...ev);
+      n++;
+    });
+  });
+  L.push('END:VCALENDAR');
+  return { text: L.map(icsFold).join('\r\n') + '\r\n', count: n };
+}
+function icsSheet(t) {
+  if (!t.start) {
+    toast('カレンダーに入れるには、出発日が必要です');
+    tripSheet(t);
+    return;
+  }
+  const o = { alarm: true, allday: false };
+  const info = h('div', { class: 'hint' });
+  const upd = () => { info.textContent = `${buildIcs(t, o).count}件の予定を書き出します。`; };
+  const check = (key, label, sub) => h('label', { class: 'optrow' },
+    h('input', { type: 'checkbox', checked: o[key], onchange: (e) => { o[key] = e.target.checked; upd(); } }),
+    h('span', null, label, sub ? h('small', { text: sub }) : null));
+  openSheet('カレンダーに書き出し',
+    h('p', { class: 'hint', style: { marginTop: '0' }, text: '日程を .ics ファイルにして、iPhone / Mac のカレンダーに取り込めます。取り込んだ予定は、カレンダー側の通知やウィジェットでも見られます。' }),
+    check('alarm', '予定の30分前に通知する', '時刻のある予定に、カレンダーの通知を付けます'),
+    check('allday', '時刻のない予定も、終日の予定として入れる', '「お土産を買う」のような予定もカレンダーに並びます'),
+    spacer(6),
+    info,
+    h('button', { class: 'btn primary block', style: { marginTop: '8px' }, onclick: async () => {
+      const r = buildIcs(t, o);
+      if (!r.count) { toast('書き出せる予定がありません(時刻のある予定が必要です)'); return; }
+      const fname = `tabi-shiori-${t.title.replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40)}.ics`;
+      await sendFile(new File([r.text], fname, { type: 'text/calendar' }));
+    } }, '書き出す'),
+    h('ul', { class: 'hint', style: { paddingLeft: '18px', margin: '12px 0 0' } },
+      h('li', { text: '時刻は、取り込んだ端末のタイムゾーンで入ります。終了時刻のない予定は1時間として入ります。' }),
+      h('li', { text: 'あとから日程を変えても、カレンダーには反映されません。変更したら、書き出して取り込み直してください(同じ予定は、アプリによって更新されるか重複します)。' })));
+  upd();
+}
+
+/* ---------- 書き出し・読み込み ---------- */
+async function exportTrips(trips, name) {
+  const json = JSON.stringify({ app: 'tabi-shiori', v: 2, trips }, null, 2);
+  const fname = `tabi-shiori-${(name || 'all').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40)}-${todayStr()}.json`;
+  await sendFile(new File([json], fname, { type: 'application/json' }));
+}
+// 共有シートが使えれば共有、だめならダウンロード
+async function sendFile(file) {
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: file.name }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  const a = h('a', { href: URL.createObjectURL(file), download: file.name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+function importFromFile(file) {
+  const r = new FileReader();
+  r.onload = () => {
+    let data;
+    try { data = JSON.parse(String(r.result)); } catch { toast('ファイルを読み込めませんでした'); return; }
+    const incoming = normState(data).trips;
+    if (!incoming.length) { toast('読み込める旅行が見つかりませんでした'); return; }
+    const dup = incoming.filter((t) => S.trips.some((x) => x.id === t.id)).length;
+    const msg = `${incoming.length}件の旅行を読み込みます。` + (dup ? `\nうち${dup}件は同じ旅行が端末内にあるため、上書きされます。` : '') + '\nよろしいですか?';
+    if (!confirm(msg)) return;
+    incoming.forEach((t) => {
+      const k = S.trips.findIndex((x) => x.id === t.id);
+      if (k >= 0) S.trips[k] = t; else S.trips.push(t);
+    });
+    save();
+    closeSheet();
+    go('list');
+    toast(`${incoming.length}件を読み込みました`);
+  };
+  r.onerror = () => toast('ファイルを読み込めませんでした');
+  r.readAsText(file);
+}
+$('#importFile').addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (f) importFromFile(f);
+});
+
+function dataSheet() {
+  openSheet('データ', h('div', { class: 'menu' },
+    h('button', { onclick: () => { closeSheet(); if (!S.trips.length) toast('旅行がまだありません'); else exportTrips(S.trips, 'all'); } }, 'すべての旅行を書き出す', h('small', { text: 'バックアップ・機種変更用(JSON)' })),
+    h('button', { onclick: () => $('#importFile').click() }, 'ファイルから読み込む', h('small', { text: '書き出したJSONを取り込みます' })),
+    h('button', { onclick: () => { closeSheet(); addSample(); } }, 'サンプルの旅行を追加')),
+    h('p', { class: 'hint', text: '旅行のデータは、この端末のブラウザ内にだけ保存されています。ブラウザのデータ消去やアプリの削除で消えるので、大事な旅行は書き出しておくと安心です。' }));
+}
+
+/* ---------- サンプル ---------- */
+function addSample() {
+  const d0 = new Date();
+  d0.setDate(d0.getDate() + ((6 - d0.getDay() + 7) % 7 || 7)); // 次の土曜
+  const t = newTrip('京都 秋のぶらり旅(サンプル)', fmtD(d0), 3);
+  t.dest = '京都府';
+  const it = (time, end, title, cat, place, cost, memo) => ({ id: uid(), time, end, title, cat, place, cost, url: '', memo, kind: '' });
+  t.days[0].title = '到着・東山さんぽ';
+  t.days[0].items = [
+    it('08:30', '10:55', '東京 → 京都(新幹線)', 'move', '東京駅', 14000, '座席は2号車・窓側\n予約番号はメモ参照'),
+    it('12:00', '13:00', '湯豆腐のランチ', 'eat', '京都市左京区南禅寺福地町', 3500, ''),
+    it('14:00', '16:30', '清水寺〜二年坂・三年坂', 'sight', '清水寺', 400, '夕方は混むので早めに'),
+    it('18:00', '', 'ホテルにチェックイン', 'stay', '京都駅周辺', 18000, ''),
+  ];
+  t.days[1].title = '嵐山・嵯峨野';
+  t.days[1].items = [
+    it('09:30', '', '嵯峨野の竹林の小径', 'sight', '竹林の小径', null, ''),
+    it('12:30', '', '湯どうふ or そば', 'eat', '', 2500, ''),
+  ];
+  t.days[2].title = '伏見稲荷から帰路へ';
+  t.days[2].items = [
+    it('08:00', '10:00', '伏見稲荷大社(千本鳥居)', 'sight', '伏見稲荷大社', null, '歩きやすい靴で'),
+    it('16:30', '19:00', '京都 → 東京(新幹線)', 'move', '京都駅', 14000, ''),
+  ];
+  t.pools.want = ['抹茶スイーツを食べる', '着物をレンタルして散歩', 'お土産を買う(八ツ橋・お茶)'].map((x) => newItem(x, 'want'));
+  t.pools.place = ['渡月橋', '金閣寺', '祇園・花見小路', '嵐山のトロッコ列車'].map((x) => newItem(x, 'place'));
+  t.packing = ['パスポート・身分証', '財布・現金', 'スマホ・充電器', '歩きやすい靴', '折りたたみ傘'].map((text, i) => ({ id: uid(), text, done: i < 2 }));
+  t.notes = [{ id: uid(), label: '宿', text: 'ホテル京都駅前\n予約番号: ABC-1234\nチェックイン 15:00〜' }];
+  S.trips.push(t);
+  save();
+  go('trip', t.id);
+  toast('サンプルを追加しました。左の候補を日程へドラッグしてみてください');
+}
+
+/* ========== 起動 ========== */
+openShared();
+render();
+window.addEventListener('hashchange', () => { if (openShared()) render(); });
+if (restoredFromPrev) toast('保存データが壊れていたため、直前の状態から復元しました');
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
